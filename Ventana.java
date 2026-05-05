@@ -7,16 +7,14 @@ public class Ventana extends JFrame {
 
     public Ventana() {
         setTitle("Navegador Local");
-        setUndecorated(true);
+        setUndecorated(true); // Quita los bordes de Windows/macOS
         setMinimumSize(new Dimension(400, 300));
 
+        // 1. Configuramos lo que es propio de la VENTANA
         configurarBarraSuperior();
-        // <- Importante: inicializar las pestañas primero
-
-        // Pasamos tanto la ventana (this) como el panel de pestañas
+        configurarEstructuraBase();
         configurarRedimensionamiento(this, panelPestanas);
 
-        pack();
         setSize(800, 600);
         setLocationRelativeTo(null);
         setVisible(true);
@@ -27,10 +25,11 @@ public class Ventana extends JFrame {
         ImageIcon icono = new ImageIcon("icono.jpg");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
+        // Título e Icono (Propio de la ventana)
         JLabel titulo = new JLabel("Brave 2", iconoFinal, JLabel.LEFT);
-        titulo.setIconTextGap(10);
         titulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 
+        // PANEL DE BOTONES DE CONTROL (Min, Max, Salir)
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         botones.setOpaque(false);
 
@@ -38,6 +37,7 @@ public class Ventana extends JFrame {
         JButton btnMax = crearBoton("❒", new Color(128, 128, 128));
         JButton btnSalir = crearBoton("X", new Color(232, 17, 35));
 
+        // Acciones que afectan all al Jframe
         btnMin.addActionListener(e -> setExtendedState(JFrame.ICONIFIED));
         btnMax.addActionListener(e -> setExtendedState(getExtendedState() == JFrame.MAXIMIZED_BOTH ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH));
         btnSalir.addActionListener(e -> cerrarNavegador());
@@ -49,6 +49,35 @@ public class Ventana extends JFrame {
         top.add(titulo, BorderLayout.LINE_START);
         top.add(botones, BorderLayout.LINE_END);
         add(top, BorderLayout.PAGE_START);
+    }
+
+    private void configurarEstructuraBase() {
+        panelPestanas = new JTabbedPane();
+        panelPestanas.addTab("+", new JPanel());
+
+        panelPestanas.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                if (panelPestanas.getSelectedIndex() == panelPestanas.getTabCount() - 1) {
+                    // Aquí llamamos a la otra clase
+                    Pestana.agregarNueva(panelPestanas);
+                }
+            }
+        });
+
+        add(panelPestanas, BorderLayout.CENTER);
+        Pestana.agregarNueva(panelPestanas);
+    }
+
+    // El método cerrarNavegador se queda aquí porque usa "this" (la ventana)
+    private void cerrarNavegador() {
+        int tabs = panelPestanas.getTabCount() - 1;
+        if (tabs > 0) {
+            if (JOptionPane.showConfirmDialog(this, "¿Cerrar " + tabs + " pestañas?", "Salir", 0) == 0) {
+                System.exit(0);
+            }
+        } else {
+            System.exit(0);
+        }
     }
 
     private JButton crearBoton(String texto, Color hover) {
@@ -63,67 +92,6 @@ public class Ventana extends JFrame {
         return btn;
     }
 
-    private void configurarMenuColores(JButton btnColor, Renderizador renderizador) {
-        JPopupMenu menu = new JPopupMenu();
-        String[] temas = {"Modo Oscuro", "Modo Claro", "Modo Sepia"};
-
-        // Tus colores actuales están perfectos
-        Color[] fondos = {
-                new Color(45, 45, 45), // Gris oscuro
-                Color.WHITE,            // Blanco
-                new Color(250, 240, 230) // Sepia/Crema
-        };
-
-        String[] textos = {
-                "#FFFFFF", // Blanco sobre oscuro
-                "#000000", // Negro sobre claro
-                "#5D4037"  // Café oscuro sobre sepia
-        };
-
-        for (int i = 0; i < temas.length; i++) {
-            final int idx = i;
-            JMenuItem item = new JMenuItem(temas[i]);
-            item.addActionListener(e -> {
-                // Llamamos al método actualizado
-                renderizador.cambiarTema(fondos[idx], textos[idx]);
-            });
-            menu.add(item);
-        }
-
-        btnColor.addActionListener(e -> menu.show(btnColor, 0, btnColor.getHeight()));
-    }
-
-    private void configurarMenuTexto(JButton btnTexto, Renderizador renderizador) {
-        JPopupMenu menu = new JPopupMenu();
-
-        // Nombres, Colores de fondo (opcional) y Colores de texto
-        String[] nombres = {"Blanco", "Negro", "Azul"};
-        String[] coloresHex = {"#FFFFFF", "#000000", "#0000FF"};
-
-        for (int i = 0; i < nombres.length; i++) {
-            final int idx = i;
-            JMenuItem item = new JMenuItem(nombres[i]);
-            item.addActionListener( e-> {
-                renderizador.cambiarColorTexto(coloresHex[idx]);
-            });
-            menu.add(item);
-        }
-
-        btnTexto.addActionListener(e -> menu.show(btnTexto, 0, btnTexto.getHeight()));
-    }
-
-    private void cerrarNavegador() {
-        int tabs = panelPestanas.getTabCount() - 1;
-        if (tabs > 0) {
-            if (JOptionPane.showConfirmDialog(this, "¿Cerrar " + tabs + " pestañas abiertas?", "Salir", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                System.exit(0);
-            }
-        } else {
-            System.exit(0);
-        }
-    }
-
-    // Metodo actualizado para recibir múltiples componentes
     private void configurarRedimensionamiento(Component... componentes) {
         MouseAdapter resizer = new MouseAdapter() {
             public void mouseMoved(MouseEvent e) {
