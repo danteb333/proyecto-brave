@@ -13,8 +13,11 @@ public class BarraNavegacion extends JPanel {
     private Renderizador renderizador;
 
     public BarraNavegacion(JLabel estado, JTabbedPane panelPestanas) {
-        setLayout(new FlowLayout(FlowLayout.LEFT));
+        this.setLayout(new BorderLayout(5, 0));
+        //setLayout(new FlowLayout(FlowLayout.LEFT));
         setOpaque(false);
+        JPanel pIzquierdo = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        JPanel pDerecho = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
 
         //boton favoritos
         btnFavorito = new JButton("☆");
@@ -23,6 +26,7 @@ public class BarraNavegacion extends JPanel {
         btnFavorito.setMargin(new Insets(0, 0, 0, 0));
         btnFavorito.setForeground(new Color(218, 165, 32));
         btnFavorito.setBorderPainted(false);
+        btnFavorito.setFocusPainted(false);
         btnFavorito.setContentAreaFilled(false);
         barra = new JTextField();
         barra.setPreferredSize(new Dimension(400, 30));
@@ -37,18 +41,15 @@ public class BarraNavegacion extends JPanel {
         btnRecargar.setMargin(new Insets(0, 0, 0, 0));
         btnRecargar.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
         btnRecargar.setBorderPainted(false);
+        btnRecargar.setFocusPainted(false);
         btnRecargar.setContentAreaFilled(false);
         //boton borrar historial
-        btnBuscar = new JButton("Ir");
+        btnBuscar = new JButton("\uD83D\uDD0E");
         btnBuscar.setEnabled(false);
-        btnBuscar.setBackground(Color.WHITE);
         btnBuscar.setFocusPainted(false);
-        btnBuscar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
-                BorderFactory.createEmptyBorder(2, 8, 2, 8)
-        ));
+        btnBuscar.setBorder(new javax.swing.border.LineBorder(Color.GRAY, 1, true));
+        btnBuscar.setPreferredSize(new Dimension(30,26));
 
-        // Botón de Fondo (Color)
         btnColor = new JButton("🎨");
         btnColor.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
         btnColor.setPreferredSize(new Dimension(40, 30));
@@ -57,8 +58,8 @@ public class BarraNavegacion extends JPanel {
         btnColor.setContentAreaFilled(false);
         btnColor.setFocusPainted(false);
         btnColor.setToolTipText("Cambiar tema de fondo");
+        btnColor.setFocusPainted(false);
 
-        // Botón de Texto
         btnTexto = new JButton("🅰");
         btnTexto.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
         btnTexto.setPreferredSize(new Dimension(40, 30));
@@ -68,7 +69,6 @@ public class BarraNavegacion extends JPanel {
         btnTexto.setFocusPainted(false);
         btnTexto.setToolTipText("Cambiar color de texto");
 
-        // Botón de Historial
         btnHistorial = new JButton("📋");
         btnHistorial.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
         btnHistorial.setPreferredSize(new Dimension(40, 30));
@@ -102,7 +102,6 @@ public class BarraNavegacion extends JPanel {
                 renderizador.cargarURL(historialurl,estado);
             }).start();
         });
-        //accion de boton favoritos
         btnFavorito.addActionListener(e -> {
             String textoBarra = barra.getText().trim();
             if (textoBarra.isEmpty()) return;
@@ -119,20 +118,24 @@ public class BarraNavegacion extends JPanel {
             } catch (Exception _) {
             }
         });
-        //boton buscar
         btnBuscar.addActionListener(e -> {
             new Thread(() ->{
                 renderizador.cargarURL(barra.getText(),estado);
             }).start();
         });
 
-        add(btnRecargar);
-        add(btnFavorito);
-        add(barra);
-        add(btnBuscar);
-        add(btnColor);
-        add(btnTexto);
-        add(btnHistorial);
+        pIzquierdo.add(btnRecargar);
+        pIzquierdo.add(btnFavorito);
+        pIzquierdo.add(barra);
+        pIzquierdo.add(btnBuscar);
+
+        pDerecho.add(btnColor);
+        pDerecho.add(btnTexto);
+        pDerecho.add(btnHistorial);
+
+        this.add(pIzquierdo, BorderLayout.CENTER);
+        this.add(pDerecho, BorderLayout.EAST);
+        //add(javax.swing.Box.createHorizontalGlue());
     }
 
     public JButton getBtnColor() {
