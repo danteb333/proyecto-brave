@@ -10,8 +10,12 @@ public class ClienteHTTP {
         barraestado.setText("Cargando..........");
         //intenta conectarse
         try{
+            InetAddress ipadress=InetAddress.getByName(host);
+            host=ipadress.getHostName();
+            System.out.println(host);
             Socket socket=null;
-            if (puerto != 443) {
+            System.out.println("cliente: "+ puerto);
+            if (puerto != 3000 && puerto != 443) {
                 socket = new Socket();
                 //limita el tiempo de conexion al servidor a 10 segundos
                 InetSocketAddress direccion= new InetSocketAddress(host,puerto);
@@ -34,9 +38,13 @@ public class ClienteHTTP {
     }
 
     public void GetContenido(Socket socket, String host,String path, JLabel barraestado,int puerto) throws IOException {
-        if (puerto == 443) {
+        System.out.println(puerto);
+        if (puerto == 3000 || puerto == 443) {
             URL url = URI.create("https://" + host + path).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            //((javax.net.ssl.HttpsURLConnection)connection).setHostnameVerifier((h, s) -> true);
+
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
             connection.setInstanceFollowRedirects(true);
             connection.setConnectTimeout(10000);
@@ -58,7 +66,6 @@ public class ClienteHTTP {
                 this.contenido = cuerpo.toString();
                 reader.close();
             }
-            return; // Salir para evitar que intente cerrar un socket que no existe
         } else {
             // logica puerto 80
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
