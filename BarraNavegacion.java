@@ -4,17 +4,70 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class BarraNavegacion extends JPanel {
+<<<<<<< Updated upstream
     private JTextField barra;
     private JButton btnBuscar;
     private JButton btnColor;
     private JButton btnTexto;
     private JTabbedPane panelPestanas;
+=======
+    private final JButton btnOnline;
+    private final JButton btnFavorito;
+    private final JTextField barra;
+    private final JButton btnBuscar;
+    private final JButton btnColor;
+    private final JButton btnTexto;
+    private final JButton btnHistorial;
+    private Renderizador renderizador;
+>>>>>>> Stashed changes
 
     public BarraNavegacion(Renderizador renderizador, JLabel estado, JTabbedPane panelPestanas) {
         this.panelPestanas = panelPestanas;
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setOpaque(false);
 
+<<<<<<< Updated upstream
+=======
+        //Boton para modo Online/Offline
+        btnOnline = new JButton("●");
+        btnOnline.setForeground(new Color(0, 204, 0));
+        btnOnline.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 28));
+        btnOnline.setPreferredSize(new Dimension(30, 30));
+        btnOnline.setMargin(new Insets(0,0,0,0));
+        btnOnline.setBorderPainted(false);
+        btnOnline.setFocusPainted(false);
+        btnOnline.setContentAreaFilled(false);
+        btnOnline.setToolTipText("Modo Online");
+
+        btnOnline.addActionListener(e ->{
+            Offline off = renderizador.getOffline();
+            boolean nuevoEstado = !off.isModoOnline();
+            off.setModoOnline(nuevoEstado);
+
+            if(nuevoEstado){
+                btnOnline.setText("●");
+                btnOnline.setForeground(new Color(0, 204, 0));
+                btnOnline.setToolTipText("Modo Actual: Online");
+                estado.setText("Conectado a la red.");
+            }else{
+                btnOnline.setText("●");
+                btnOnline.setForeground(new Color(255, 0, 0));
+                btnOnline.setToolTipText("Modo Actual: Off");
+                estado.setText("Desconectado de la red.");
+            }
+        });
+
+
+        //boton favoritos
+        btnFavorito = new JButton("☆");
+        btnFavorito.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 28));
+        btnFavorito.setPreferredSize(new Dimension(30, 30));
+        btnFavorito.setMargin(new Insets(0, 0, 0, 0));
+        btnFavorito.setForeground(new Color(218, 165, 32));
+        btnFavorito.setBorderPainted(false);
+        btnFavorito.setFocusPainted(false);
+        btnFavorito.setContentAreaFilled(false);
+>>>>>>> Stashed changes
         barra = new JTextField();
         barra.setPreferredSize(new Dimension(400, 30));
         // Aplicar a la barra de búsqueda para que no se pegue a los bordes
@@ -23,6 +76,17 @@ public class BarraNavegacion extends JPanel {
                 BorderFactory.createEmptyBorder(5, 10, 5, 10) // Espacio interno (Padding)
         ));
 
+<<<<<<< Updated upstream
+=======
+        JButton btnRecargar = new JButton("↺");
+        btnRecargar.setPreferredSize(new Dimension(30,30));
+        btnRecargar.setMargin(new Insets(0, 0, 0, 0));
+        btnRecargar.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnRecargar.setBorderPainted(false);
+        btnRecargar.setFocusPainted(false);
+        btnRecargar.setContentAreaFilled(false);
+        //boton borrar historial
+>>>>>>> Stashed changes
         btnBuscar = new JButton("Ir");
         btnBuscar.setEnabled(false);
 
@@ -79,10 +143,26 @@ public class BarraNavegacion extends JPanel {
             }
         });
 
+<<<<<<< Updated upstream
         add(barra);
         add(btnBuscar);
         add(btnColor);
         add(btnTexto);
+=======
+        pIzquierdo.add(btnRecargar);
+        pIzquierdo.add(btnFavorito);
+        pIzquierdo.add(barra);
+        pIzquierdo.add(btnBuscar);
+
+        pDerecho.add(btnOnline);
+        pDerecho.add(btnColor);
+        pDerecho.add(btnTexto);
+        pDerecho.add(btnHistorial);
+
+        this.add(pIzquierdo, BorderLayout.CENTER);
+        this.add(pDerecho, BorderLayout.EAST);
+        //add(javax.swing.Box.createHorizontalGlue());
+>>>>>>> Stashed changes
     }
 
     public JButton getBtnColor() {

@@ -11,7 +11,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Renderizador extends JPanel {
+<<<<<<< Updated upstream
     private JEditorPane visorHTML;
+=======
+    private final JEditorPane visorHTML;
+    private final ClienteHTTP clienteHTTP;
+    private final Pestana pestana;
+    private final Historial historial;
+    private final BarraNavegacion barraNavegacion;
+    private final Offline offline;
+>>>>>>> Stashed changes
 
     public Renderizador(JLabel estado, JTextField barra) {
         setLayout(new BorderLayout());
