@@ -16,6 +16,11 @@ public class Renderizador extends JPanel {
     private final Pestana pestana;
     private final Historial historial;
     private final BarraNavegacion barraNavegacion;
+    private NavegaAvanzada navegaAvanzada;
+
+    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
+        this.navegaAvanzada = navegaAvanzada;
+    }
 
     public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
         setLayout(new BorderLayout());
@@ -66,7 +71,7 @@ public class Renderizador extends JPanel {
         });
     }
 
-    public void cargarURL(String nombreArchivo, JLabel estado) {
+    public void cargarURL(String nombreArchivo, JLabel estado, Boolean registrarenAvanzada) {
         if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
             nombreArchivo = "http://" + nombreArchivo;
         }
@@ -105,6 +110,10 @@ public class Renderizador extends JPanel {
             }
             final String urlHistorial=urlFinal;
 
+
+
+
+
             SwingUtilities.invokeLater(() -> {
                 estado.setText(clienteHTTP.getFirstLine());
                 barraNavegacion.getBarra().setText(urlHistorial);
@@ -113,6 +122,8 @@ public class Renderizador extends JPanel {
                     urlfnl=nuevaurl[1];
                 historial.agregarVisita(urlHistorial,urlfnl);
                 visorHTML.setContentType("text/html");
+
+
                 //con soporte de fotos
                 try{
                     URL urlBase = URI.create(urlHistorial).toURL();
@@ -163,11 +174,22 @@ public class Renderizador extends JPanel {
                         }
                     }
                 }
+                String UrlPila= urlHistorial+" - "+urlfnl;
+
+                if(registrarenAvanzada && navegaAvanzada!=null){
+                    navegaAvanzada.registrarVisita(UrlPila);
+                }
             });
+
         } catch (Exception e) {
             SwingUtilities.invokeLater(() -> estado.setText(e.getMessage()));
         }
     }
+    //metodo para mantener compatibilidad con llamadas anteriores sin el parametro de registro en avanzada
+    public void cargarURL(String nombreArchivo, JLabel estado) {
+        cargarURL(nombreArchivo, estado, true);
+    }
+
 
     public void cambiarTema(java.awt.Color fondo, String colorTexto) {
         try {
