@@ -71,7 +71,7 @@ public class Renderizador extends JPanel {
         });
     }
 
-    public void cargarURL(String nombreArchivo, JLabel estado, Boolean registrarenAvanzada) {
+    public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
         if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
             nombreArchivo = "http://" + nombreArchivo;
         }
@@ -110,8 +110,10 @@ public class Renderizador extends JPanel {
             }
             final String urlHistorial=urlFinal;
 
-
-
+            // Control de las pilas de navegación avanzada
+            if (registrarEnHistorial && navegaAvanzada != null) {
+                navegaAvanzada.registrarVisitaNueva(urlHistorial);
+            }
 
 
             SwingUtilities.invokeLater(() -> {
@@ -120,7 +122,10 @@ public class Renderizador extends JPanel {
                 String urlfnl=nuevaurl[0];
                 if (nuevaurl[0].contains("www"))
                     urlfnl=nuevaurl[1];
-                historial.agregarVisita(urlHistorial,urlfnl);
+
+                if (registrarEnHistorial) {
+                    historial.agregarVisita(urlHistorial, urlfnl);
+                }
                 visorHTML.setContentType("text/html");
 
 
@@ -173,11 +178,6 @@ public class Renderizador extends JPanel {
                             }
                         }
                     }
-                }
-                String UrlPila= urlHistorial+" - "+urlfnl;
-
-                if(registrarenAvanzada && navegaAvanzada!=null){
-                    navegaAvanzada.registrarVisita(UrlPila);
                 }
             });
 
