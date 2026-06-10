@@ -4,54 +4,15 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class BarraNavegacion extends JPanel {
-    private final JButton btnOnline;
+    private final JButton btnAtras;
+    private final JButton btnAdelante;
     private final JButton btnFavorito;
     private final JTextField barra;
     private final JButton btnBuscar;
     private final JButton btnColor;
     private final JButton btnTexto;
     private final JButton btnHistorial;
-
-
-    public BarraNavegacion(Renderizador renderizador, JLabel estado, JTabbedPane panelPestanas) {
-        this.panelPestanas = panelPestanas;
-        setLayout(new FlowLayout(FlowLayout.LEFT));
-        setOpaque(false);
-
-        //Boton para modo Online/Offline
-        btnOnline = new JButton("●");
-        btnOnline.setForeground(new Color(0, 204, 0));
-        btnOnline.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 28));
-        btnOnline.setPreferredSize(new Dimension(30, 30));
-        btnOnline.setMargin(new Insets(0,0,0,0));
-        btnOnline.setBorderPainted(false);
-        btnOnline.setFocusPainted(false);
-        btnOnline.setContentAreaFilled(false);
-        btnOnline.setToolTipText("Modo Online");
-
-        btnOnline.addActionListener(e ->{
-            Offline off = renderizador.getOffline();
-            boolean nuevoEstado = !off.isModoOnline();
-            off.setModoOnline(nuevoEstado);
-
-            if(nuevoEstado){
-                btnOnline.setText("●");
-                btnOnline.setForeground(new Color(0, 204, 0));
-                btnOnline.setToolTipText("Modo Actual: Online");
-                estado.setText("Conectado a la red.");
-            }else{
-                btnOnline.setText("●");
-                btnOnline.setForeground(new Color(255, 0, 0));
-                btnOnline.setToolTipText("Modo Actual: Off");
-                estado.setText("Desconectado de la red.");
-            }
-        });
-
-    private final JButton btnAtras;
-    private final JButton btnAdelante;
-
     private Renderizador renderizador;
-
 
     public BarraNavegacion(JLabel estado, JTabbedPane panelPestanas) {
         this.setLayout(new BorderLayout(5, 0));
@@ -69,7 +30,6 @@ public class BarraNavegacion extends JPanel {
         btnFavorito.setBorderPainted(false);
         btnFavorito.setFocusPainted(false);
         btnFavorito.setContentAreaFilled(false);
-
         barra = new JTextField();
         barra.setPreferredSize(new Dimension(400, 30));
         // Aplicar a la barra de búsqueda para que no se pegue a los bordes
@@ -77,6 +37,7 @@ public class BarraNavegacion extends JPanel {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true), // Borde redondeado
                 BorderFactory.createEmptyBorder(5, 10, 5, 10) // Espacio interno (Padding)
         ));
+
         //boton recargar
         JButton btnRecargar = new JButton("↺");
         btnRecargar.setPreferredSize(new Dimension(30,30));
@@ -86,33 +47,23 @@ public class BarraNavegacion extends JPanel {
         btnRecargar.setFocusPainted(false);
         btnRecargar.setContentAreaFilled(false);
 
-        //boton borrar historial
-
-        btnBuscar = new JButton("Ir");
-        btnBuscar.setEnabled(false);
-
-        btnColor = new JButton("Fondo");
-        btnTexto = new JButton("Texto");
-
-
         //boton atras
         btnAtras = new JButton("◀");
         btnAtras.setPreferredSize(new Dimension(30,30));
         btnAtras.setMargin(new Insets(0, 0, 0, 0));
-        btnAtras.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAtras.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
         btnAtras.setBorderPainted(false);
-        btnAtras.setFocusPainted(false);
         btnAtras.setContentAreaFilled(false);
+        btnAtras.setFocusPainted(false);
 
         //boton adelante
         btnAdelante = new JButton("▶");
         btnAdelante.setPreferredSize(new Dimension(30,30));
         btnAdelante.setMargin(new Insets(0, 0, 0, 0));
-        btnAdelante.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAdelante.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
         btnAdelante.setBorderPainted(false);
-        btnAdelante.setFocusPainted(false);
         btnAdelante.setContentAreaFilled(false);
-
+        btnAdelante.setFocusPainted(false);
         //boton borrar historial
         btnBuscar = new JButton("\uD83D\uDD0E");
         btnBuscar.setEnabled(false);
@@ -148,7 +99,6 @@ public class BarraNavegacion extends JPanel {
         btnHistorial.setFocusPainted(false);
         btnHistorial.setToolTipText("Ver historial de navegación");
 
-
         // Activar/Desactivar botón
         barra.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { verificar(); }
@@ -173,9 +123,6 @@ public class BarraNavegacion extends JPanel {
                 renderizador.cargarURL(historialurl,estado);
             }).start();
         });
-
-
-
         btnFavorito.addActionListener(e -> {
             String textoBarra = barra.getText().trim();
             if (textoBarra.isEmpty()) return;
@@ -198,7 +145,6 @@ public class BarraNavegacion extends JPanel {
             }).start();
         });
 
-
         pIzquierdo.add(btnAtras);
         pIzquierdo.add(btnAdelante);
         pIzquierdo.add(btnRecargar);
@@ -213,7 +159,6 @@ public class BarraNavegacion extends JPanel {
         this.add(pIzquierdo, BorderLayout.CENTER);
         this.add(pDerecho, BorderLayout.EAST);
         //add(javax.swing.Box.createHorizontalGlue());
-
     }
 
     public JButton getBtnColor() {
@@ -228,8 +173,6 @@ public class BarraNavegacion extends JPanel {
     public JButton getBtnFavorito() {
         return btnFavorito;
     }
-    public JButton getBtnAtras() {return btnAtras;}
-    public JButton getBtnAdelante() {return btnAdelante;}
 
     public void setRenderizador(Renderizador renderizador) {
         this.renderizador = renderizador;
@@ -238,4 +181,7 @@ public class BarraNavegacion extends JPanel {
     public JTextField getBarra() {
         return barra;
     }
+
+    public JButton getBtnAtras() { return btnAtras; }
+    public JButton getBtnAdelante() { return btnAdelante; }
 }

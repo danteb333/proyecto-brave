@@ -8,6 +8,7 @@ public class Pestana extends JPanel {
     private final JTabbedPane contenedor;
     private final JLabel lblEstado=new JLabel("");
 
+
     // El constructor configura el contenido visual de la pestaña
     public Pestana(String titulo, JTabbedPane contenedor) {
         this.titulo = titulo;
@@ -22,29 +23,8 @@ public class Pestana extends JPanel {
         BarraNavegacion barraNavegacion = new BarraNavegacion(lblEstado, contenedor);
         Renderizador renderizador = new Renderizador(lblEstado, barraFalsa, this, historial, barraNavegacion);
         barraNavegacion.setRenderizador(renderizador);
-
-
-        //instanciamos clase pasandole los botones fisicos
-
-        NavegaAvanzada navegaAvanzada= new NavegaAvanzada(barraNavegacion.getBtnAtras(), barraNavegacion.getBtnAdelante());
+        NavegaAvanzada navegaAvanzada = new NavegaAvanzada(barraNavegacion.getBtnAtras(), barraNavegacion.getBtnAdelante());
         renderizador.setNavegaAvanzada(navegaAvanzada);
-
-
-        //accion de boton atras
-        barraNavegacion.getBtnAtras().addActionListener(e -> {
-            String urlprevia = navegaAvanzada.irAtras();
-            if (urlprevia != null) {
-                new Thread(() -> renderizador.cargarURL(urlprevia, lblEstado, false)).start();
-            }
-        });
-
-        //accion de boton adelante
-        barraNavegacion.getBtnAdelante().addActionListener(e -> {
-            String urlSiguiente = navegaAvanzada.irAdelante();
-            if (urlSiguiente != null) {
-                new Thread(() -> renderizador.cargarURL(urlSiguiente, lblEstado, false)).start();
-            }
-        });
 
         // 2. Configurar la lógica de los botones de la barra de navegación
         configurarMenuColores(barraNavegacion.getBtnColor(),renderizador);
@@ -52,6 +32,24 @@ public class Pestana extends JPanel {
         configurarMenuHistorial(barraNavegacion.getBtnHistorial(),renderizador,historial,barraNavegacion);
 
 
+        //accion de boton atrás
+        barraNavegacion.getBtnAtras().addActionListener(e -> {
+            String urlPrevia = navegaAvanzada.irAtras();
+            if (urlPrevia != null) {
+                new Thread(() -> {
+                    renderizador.cargarURL(urlPrevia, lblEstado, false);
+                }).start();
+            }
+        });
+        //accion de boton adelante
+        barraNavegacion.getBtnAdelante().addActionListener(e -> {
+            String urlSiguiente = navegaAvanzada.irAdelante();
+            if (urlSiguiente != null) {
+                new Thread(() -> {
+                    renderizador.cargarURL(urlSiguiente, lblEstado, false);
+                }).start();
+            }
+        });
 
         // 3. Ensamblar el layout interno
         JPanel pie = new JPanel(new BorderLayout());
@@ -62,15 +60,7 @@ public class Pestana extends JPanel {
         this.add(pie, BorderLayout.SOUTH);
     }
 
-
     public static void agregarNueva(JTabbedPane panel) {
-        if(panel.getTabCount()-1 >4){
-            JOptionPane.showMessageDialog(null,"No se pueden abrir más de 5 pestañas",
-                    "Límite alcanzado",JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-
         int index = panel.getTabCount() - 1; // Posición antes del botón "+"
         String nombrePestana = "Nueva Pestaña";
 

@@ -30,8 +30,6 @@ public class Historial {
         entradas.clear();
     }
 
-
-
     //favoritos
     private final HashSet<String> favoritos = new HashSet<>();
 
@@ -45,10 +43,6 @@ public class Historial {
         } else {
             favoritos.add(url);
         }
-    }
-
-    public LinkedList<String> getEntradas() {
-        return entradas;
     }
 }
 

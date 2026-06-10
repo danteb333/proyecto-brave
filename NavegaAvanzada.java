@@ -1,60 +1,51 @@
-import java.net.URL;
 import java.util.Stack;
-
 import javax.swing.JButton;
 
-
 public class NavegaAvanzada {
-
-
-    private Historial historial;
-
     private final Stack<String> pilaAtras;
     private final Stack<String> pilaAdelante;
     private String urlActual;
 
-    //botones
-
+    // Referencias a los botones visuales para encenderlos/apagarlos
     private final JButton btnAtras;
     private final JButton btnAdelante;
 
     public NavegaAvanzada(JButton btnAtras, JButton btnAdelante) {
-        this.btnAtras = btnAtras;
-        this.btnAdelante = btnAdelante;
         this.pilaAtras = new Stack<>();
         this.pilaAdelante = new Stack<>();
+        this.btnAtras = btnAtras;
+        this.btnAdelante = btnAdelante;
 
+        // Cumple la regla: Al iniciar pestaña los botones deben estar deshabilitados
         actualizarBotones();
     }
 
-    public void registrarVisita(String nuevaUrl){
-
-        for (String comparar: historial.getEntradas()){
-                //se evitan duplicados si se va a un link con la misma pagina
-            if (urlActual != null && !urlActual.equals(nuevaUrl) && !urlActual.equals(comparar)) {
-                pilaAtras.push(nuevaUrl);
-                pilaAdelante.clear();
-            }
+    // Se llama cada vez que el usuario escribe una URL o hace clic en un enlace normal
+    public void registrarVisitaNueva(String nuevaUrl) {
+        // Evita duplicados si hace clic en un enlace que lleva a la misma página
+        if (urlActual != null && !urlActual.equals(nuevaUrl)) {
+            pilaAtras.push(urlActual);
+            pilaAdelante.clear(); // Al tomar una nueva ruta, el "futuro" anterior se borra
         }
         urlActual = nuevaUrl;
         actualizarBotones();
     }
 
-    public String irAtras(){
-
+    public String irAtras() {
         if (!pilaAtras.isEmpty()) {
-            pilaAdelante.push(urlActual);  //guardamos la actual en el futuro
-            urlActual = pilaAtras.pop(); // sacamos la anterior del pasado
+            pilaAdelante.push(urlActual); // Guardamos la actual en el futuro
+            urlActual = pilaAtras.pop();  // Sacamos la anterior del pasado
             actualizarBotones();
             return urlActual;
         }
-        return null; // No hay página atras
+        return null;
     }
 
-    public String irAdelante(){
+    public String irAdelante() {
         if (!pilaAdelante.isEmpty()) {
-            pilaAtras.push(urlActual); //guardamos al actual en el pasado
-            urlActual = pilaAdelante.pop(); // sacamos la siguiente del futuro
+            pilaAtras.push(urlActual);    // Guardamos la actual en el pasado
+            urlActual = pilaAdelante.pop();// Sacamos la siguiente del futuro
+            actualizarBotones();
             return urlActual;
         }
         return null;
@@ -64,5 +55,4 @@ public class NavegaAvanzada {
         btnAtras.setEnabled(!pilaAtras.isEmpty());
         btnAdelante.setEnabled(!pilaAdelante.isEmpty());
     }
-
 }
