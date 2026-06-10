@@ -4,6 +4,7 @@ import java.awt.event.*;
 
 public class Ventana extends JFrame {
     private JTabbedPane panelPestanas;
+    private static boolean modoOffline = false;
 
     public Ventana() {
         setTitle("Navegador Local");
@@ -20,6 +21,9 @@ public class Ventana extends JFrame {
         setVisible(true);
     }
 
+    public static boolean Modo(){
+        return modoOffline;
+    }
     private void configurarBarraSuperior() {
         JPanel top = new JPanel(new BorderLayout());
 
@@ -37,12 +41,31 @@ public class Ventana extends JFrame {
         JButton btnMin = crearBoton("—", new Color(128, 128, 128));
         JButton btnMax = crearBoton("❒", new Color(128, 128, 128));
         JButton btnSalir = crearBoton("X", new Color(232, 17, 35));
+        //Boton Online/Offline
+        JButton btnRed = crearBoton("⚫", new Color(255, 255, 255));
+        btnRed.setForeground(new Color(0,255,0));
+        btnRed.setToolTipText("Modo Actual: Online");
+        btnRed.setBorderPainted(false);
+        btnRed.setFocusPainted(false);
+        btnRed.addActionListener(e->{
+            modoOffline = !modoOffline;
+            if(modoOffline){
+                btnRed.setText("⚫");
+                btnRed.setForeground(new Color(255,0,0));
+                btnRed.setToolTipText("Modo Actual: Offline");
+            }else{
+                btnRed.setText("⚫");
+                btnRed.setForeground(new Color(0,255,0));
+                btnRed.setToolTipText("Modo Actual: Online");
+            }
+        });
 
         // Acciones que afectan all al Jframe
         btnMin.addActionListener(e -> setExtendedState(JFrame.ICONIFIED));
         btnMax.addActionListener(e -> setExtendedState(getExtendedState() == JFrame.MAXIMIZED_BOTH ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH));
         btnSalir.addActionListener(e -> cerrarNavegador());
 
+        botones.add(btnRed);
         botones.add(btnMin);
         botones.add(btnMax);
         botones.add(btnSalir);

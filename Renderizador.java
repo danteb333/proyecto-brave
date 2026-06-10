@@ -6,9 +6,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 
 public class Renderizador extends JPanel {
     private final JEditorPane visorHTML;
@@ -17,10 +15,6 @@ public class Renderizador extends JPanel {
     private final Historial historial;
     private final BarraNavegacion barraNavegacion;
     private NavegaAvanzada navegaAvanzada;
-
-    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
-        this.navegaAvanzada = navegaAvanzada;
-    }
 
     public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
         setLayout(new BorderLayout());
@@ -45,6 +39,9 @@ public class Renderizador extends JPanel {
         add(scroll, BorderLayout.CENTER);
     }
 
+    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
+        this.navegaAvanzada = navegaAvanzada;
+    }
     public void configurarEventos(JLabel estado, JTextField barra) {
         visorHTML.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -72,6 +69,7 @@ public class Renderizador extends JPanel {
     }
 
     public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
+
         if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
             nombreArchivo = "http://" + nombreArchivo;
         }
@@ -82,53 +80,69 @@ public class Renderizador extends JPanel {
             String host = url.getHost();
             String path = (url.getPath() == null || url.getPath().isEmpty()) ? "/" : url.getPath();
 
-            String[] nuevaurl = host.split("\\.");
-            int[] puertos = {80, 443};
+            int puertoIngresado = url.getPort();
+            int[] puertos = (puertoIngresado != -1) ? new int[]{puertoIngresado} : new int[]{80, 443, 3000};
+
             boolean conectado = false;
 
             for (int puertoEscogido : puertos) {
                 if (clienteHTTP.conectar(host, estado, path, puertoEscogido)) {
                     String status = clienteHTTP.getFirstLine();
 
-                    // evaluamos puerto 80 y si fue redireccionada a link https en ese puerto
+                    if (status == null || status.isEmpty()) continue;
+
                     if (puertoEscogido == 80 && (status.contains("301") || status.contains("302"))) {
                         continue;
                     }
-
-                    // detectamos si la pagina se cargo bien o fue redireccionada (301 o 302)
                     if (status.contains("200") || status.contains("301") || status.contains("302")) {
                         conectado = true;
-                        urlFinal = (puertoEscogido == 443 ? "https://" : "http://") + host + path;
+                        String protocolo = (puertoEscogido == 443) ? "https://" : (puertoEscogido == 80) ? "http://" : "http://";
+                        String stringPuerto = (puertoEscogido != 80 && puertoEscogido != 443) ? (":" + puertoEscogido) : "";
+                        urlFinal = protocolo + host + stringPuerto + path;
                         break;
                     }
                 }
             }
 
             if (!conectado) {
-                SwingUtilities.invokeLater(() -> estado.setText("No se pudo acceder a la pagina"));
+                SwingUtilities.invokeLater(() -> estado.setText("No se pudo acceder a la página"));
                 return;
             }
-            final String urlHistorial=urlFinal;
 
-            // Control de las pilas de navegación avanzada
+            //cambio nombre para historial en caso de ser ip o dominio
+            String hostResuelto = host;
+            try {
+                //convertir la IP a su nombre de dominio real
+                java.net.InetAddress inetAddr = java.net.InetAddress.getByName(host);
+                hostResuelto = inetAddr.getHostName();
+            } catch (java.net.UnknownHostException _) {
+            }
+
+            final String urlHistorial = urlFinal.replaceFirst(host, hostResuelto);
+            final String hostVisual = hostResuelto;
+
             if (registrarEnHistorial && navegaAvanzada != null) {
                 navegaAvanzada.registrarVisitaNueva(urlHistorial);
             }
 
-
             SwingUtilities.invokeLater(() -> {
                 estado.setText(clienteHTTP.getFirstLine());
                 barraNavegacion.getBarra().setText(urlHistorial);
-                String urlfnl=nuevaurl[0];
-                if (nuevaurl[0].contains("www"))
-                    urlfnl=nuevaurl[1];
+                //mejora para ip
+                String urlfnl = hostVisual;
+                if (!esIP(hostVisual)) {
+                    if (hostVisual.contains("www.")) {
+                        urlfnl = hostVisual.replace("www.", "");
+                    } else if (hostVisual.split("\\.").length > 2) {
+                        urlfnl = hostVisual.split("\\.")[1];
+                    }
+                }
 
                 if (registrarEnHistorial) {
                     historial.agregarVisita(urlHistorial, urlfnl);
                 }
+                //historial.agregarVisita(urlHistorial,urlfnl);
                 visorHTML.setContentType("text/html");
-
-
                 //con soporte de fotos
                 try{
                     URL urlBase = URI.create(urlHistorial).toURL();
@@ -157,14 +171,17 @@ public class Renderizador extends JPanel {
                 //actualiza boton de favoritos
                 barraNavegacion.getBtnFavorito().setText(historial.esFavorito(urlHistorial) ? "★" : "☆");
                 //cambiar nombre a pestaña
-                String nombre = host;
-                if (nombre.startsWith("www.")) {
-                    nombre = nombre.substring(4);
+                String nombre;
+                if (esIP(hostVisual)) {
+                    nombre = hostVisual;
+                } else {
+                    nombre = hostVisual.replace("www.", "");
+                    int punto = nombre.indexOf(".");
+                    if (punto != -1) {
+                        nombre = nombre.substring(0, punto);
+                    }
                 }
-                int punto = nombre.indexOf(".");
-                if (punto != -1) {
-                    nombre = nombre.substring(0, punto);
-                }
+
                 JTabbedPane panel=pestana.getContenedor();
                 int index = panel.getSelectedIndex();
                 if (index != -1) {
@@ -180,18 +197,16 @@ public class Renderizador extends JPanel {
                     }
                 }
             });
-
         } catch (Exception e) {
             SwingUtilities.invokeLater(() -> estado.setText(e.getMessage()));
         }
     }
-    //metodo para mantener compatibilidad con llamadas anteriores sin el parametro de registro en avanzada
+
     public void cargarURL(String nombreArchivo, JLabel estado) {
         cargarURL(nombreArchivo, estado, true);
     }
 
-
-    public void cambiarTema(java.awt.Color fondo, String colorTexto) {
+    public void cambiarTema(Color fondo, String colorTexto) {
         try {
             visorHTML.setBackground(fondo);
             String fondoHex = String.format("#%02x%02x%02x", fondo.getRed(), fondo.getGreen(), fondo.getBlue());
@@ -209,18 +224,18 @@ public class Renderizador extends JPanel {
             hojaEstilos.addRule(reglaFondo);
             hojaEstilos.addRule(reglaTexto);
 
-            java.net.URL urlActual = visorHTML.getPage();
+            URL urlActual = visorHTML.getPage();
             String codigoHtml = visorHTML.getText();
 
             visorHTML.setContentType("text/html");
             visorHTML.setText(codigoHtml);
 
-            javax.swing.text.html.HTMLDocument doc = (javax.swing.text.html.HTMLDocument) visorHTML.getDocument();
+            HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
             if (urlActual != null) {
                 doc.setBase(urlActual);
             } else {
                 String carpetaNativa = System.getProperty("user.dir");
-                doc.setBase(new java.io.File(carpetaNativa).toURI().toURL());
+                doc.setBase(new File(carpetaNativa).toURI().toURL());
             }
             visorHTML.repaint();
 
@@ -256,5 +271,9 @@ public class Renderizador extends JPanel {
 
     public Historial getHistorial() {
         return historial;
+    }
+
+    private boolean esIP(String host) {
+        return host.matches("(\\d{1,3}\\.){3}\\d{1,3}");
     }
 }
