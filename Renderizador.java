@@ -16,6 +16,8 @@ public class Renderizador extends JPanel {
     private final Pestana pestana;
     private final Historial historial;
     private final BarraNavegacion barraNavegacion;
+    public Renderizador(JLabel estado, JTextField barra) {
+      
     private NavegaAvanzada navegaAvanzada;
 
     public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
@@ -23,6 +25,7 @@ public class Renderizador extends JPanel {
     }
 
     public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
+
         setLayout(new BorderLayout());
         visorHTML = new JEditorPane();
         visorHTML.setEditable(false);
