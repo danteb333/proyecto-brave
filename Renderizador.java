@@ -1,33 +1,40 @@
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.Document;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 
 public class Renderizador extends JPanel {
-<<<<<<< Updated upstream
-    private JEditorPane visorHTML;
-=======
     private final JEditorPane visorHTML;
     private final ClienteHTTP clienteHTTP;
     private final Pestana pestana;
     private final Historial historial;
     private final BarraNavegacion barraNavegacion;
-    private final Offline offline;
->>>>>>> Stashed changes
-
     public Renderizador(JLabel estado, JTextField barra) {
+      
+    private NavegaAvanzada navegaAvanzada;
+
+    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
+        this.navegaAvanzada = navegaAvanzada;
+    }
+
+    public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
+
         setLayout(new BorderLayout());
         visorHTML = new JEditorPane();
         visorHTML.setEditable(false);
         visorHTML.setCursor(new Cursor(Cursor.HAND_CURSOR));
         visorHTML.setContentType("text/html");
+        this.clienteHTTP=new ClienteHTTP();
+        this.historial=historial;
+        this.pestana=pestana;
+        this.barraNavegacion=barraNavegacion;
 
         // Contenido por defecto
         visorHTML.setText("<html><body style='text-align:center; font-family:Arial;'>"
@@ -44,110 +51,184 @@ public class Renderizador extends JPanel {
     public void configurarEventos(JLabel estado, JTextField barra) {
         visorHTML.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                try {
-                    String nombreArchivo = "";
-
-                    // Intentamos obtener el nombre del archivo del link
-                    if (e.getURL() != null) {
-                        nombreArchivo = e.getURL().getFile();
-                        // Si la ruta es absoluta (trae C:/), extraemos solo el nombre
-                        if (nombreArchivo.contains("/")) {
-                            nombreArchivo = nombreArchivo.substring(nombreArchivo.lastIndexOf('/') + 1);
-                        }
-                    } else {
-                        // Si el URL es nulo por el cambio de estilo, extraemos la descripción del link
-                        nombreArchivo = e.getDescription();
-                    }
-
-                    // Limpiamos espacios y caracteres raros
-                    nombreArchivo = nombreArchivo.replace("%20", " ");
-
-                    // Actualizamos la barra y cargamos
-                    barra.setText(nombreArchivo);
-                    cargarURL(nombreArchivo, estado);
-
-                } catch (Exception ex) {
-                    estado.setText("Error al abrir vínculo: " + ex.getMessage());
+                URL urlBase = visorHTML.getPage();
+                String urlClickeada = (e.getURL() != null) ? e.getURL().toString() : e.getDescription();
+                if (urlClickeada.startsWith("http://")) {
+                    urlClickeada = urlClickeada.replace("http://", "");
+                } else if (urlClickeada.startsWith("https://")) {
+                    urlClickeada = urlClickeada.replace("https://", "");
                 }
+
+                final String urlFinalAProcesar = urlClickeada;
+
+                new Thread(() -> {
+                    try {
+                        cargarURL(urlFinalAProcesar, estado);
+                    } catch (Exception ex) {
+                        SwingUtilities.invokeLater(() ->
+                                estado.setText("Error: " + ex.getMessage())
+                        );
+                    }
+                }).start();
             }
         });
     }
 
-    public void cargarURL(String nombreArchivo, JLabel estado) {
+    public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
+        if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
+            nombreArchivo = "http://" + nombreArchivo;
+        }
+
+        String urlFinal = nombreArchivo;
         try {
-                // 1. Obtener la carpeta nativa del proyecto
-                String carpetaNativa = System.getProperty("user.dir");
-                File archivo = new File(carpetaNativa, nombreArchivo);
+            URL url = URI.create(nombreArchivo).toURL();
+            String host = url.getHost();
+            String path = (url.getPath() == null || url.getPath().isEmpty()) ? "/" : url.getPath();
 
-                // Si el usuario puso una ruta completa, File la reconocerá automáticamente
+            String[] nuevaurl = host.split("\\.");
+            int[] puertos = {80, 443};
+            boolean conectado = false;
 
-            if (!archivo.exists()){
-                archivo=new File(nombreArchivo);
-            }
-                if (archivo.exists() && archivo.isFile()) {
+            for (int puertoEscogido : puertos) {
+                if (clienteHTTP.conectar(host, estado, path, puertoEscogido)) {
+                    String status = clienteHTTP.getFirstLine();
 
-                    if(nombreArchivo.toLowerCase().endsWith(".html") || nombreArchivo.toLowerCase().endsWith(".htm")) {
-                        // 2. Leer el código HTML como texto
-                        String codigo = new String(Files.readAllBytes(archivo.toPath()));
-
-                        // 3. Configurar el visor para que acepte HTML y links
-                        visorHTML.setContentType("text/html");
-
-                        // 4. ESTABLECER LA BASE (Crucial para que funcionen los links relativos)
-                        visorHTML.setText(codigo); // Primero inyectamos el texto
-                        HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
-                        doc.setBase(archivo.getParentFile().toURI().toURL()); // Luego fijamos la carpeta
-
-                        estado.setText("\u2713 " + archivo.getName() + " cargado");
-                        estado.setForeground(new Color(0, 102, 0)); // Verde éxito
-                    }else{
-                        JOptionPane.showMessageDialog(null,"El archivo no es html");
+                    // evaluamos puerto 80 y si fue redireccionada a link https en ese puerto
+                    if (puertoEscogido == 80 && (status.contains("301") || status.contains("302"))) {
+                        continue;
                     }
-                } else {
-                    JOptionPane.showMessageDialog(null,"El archivo no existe");
-                    estado.setText("Error: Archivo no encontrado");
-                    estado.setForeground(Color.RED);
+
+                    // detectamos si la pagina se cargo bien o fue redireccionada (301 o 302)
+                    if (status.contains("200") || status.contains("301") || status.contains("302")) {
+                        conectado = true;
+                        urlFinal = (puertoEscogido == 443 ? "https://" : "http://") + host + path;
+                        break;
+                    }
                 }
-        } catch (Exception ex) {
-            estado.setText("Error al procesar el archivo");
-            ex.printStackTrace();
+            }
+
+            if (!conectado) {
+                SwingUtilities.invokeLater(() -> estado.setText("No se pudo acceder a la pagina"));
+                return;
+            }
+            final String urlHistorial=urlFinal;
+
+            // Control de las pilas de navegación avanzada
+            if (registrarEnHistorial && navegaAvanzada != null) {
+                navegaAvanzada.registrarVisitaNueva(urlHistorial);
+            }
+
+
+            SwingUtilities.invokeLater(() -> {
+                estado.setText(clienteHTTP.getFirstLine());
+                barraNavegacion.getBarra().setText(urlHistorial);
+                String urlfnl=nuevaurl[0];
+                if (nuevaurl[0].contains("www"))
+                    urlfnl=nuevaurl[1];
+
+                if (registrarEnHistorial) {
+                    historial.agregarVisita(urlHistorial, urlfnl);
+                }
+                visorHTML.setContentType("text/html");
+
+
+                //con soporte de fotos
+                try{
+                    URL urlBase = URI.create(urlHistorial).toURL();
+                    visorHTML.getDocument().putProperty(Document.StreamDescriptionProperty, urlBase);
+                } catch (MalformedURLException _) {
+                }
+                HTMLEditorKit kit = new HTMLEditorKit();
+                //carga de imagenes en segundo plano
+                kit.setAutoFormSubmission(false);
+                visorHTML.setEditorKit(kit);
+
+                String html = clienteHTTP.getContenido();
+                if (html != null) {
+                    //buscar imagenes en la misma pagina (urlHistorial)
+                    if (!html.contains("<base")) {
+                        html = html.replace("<head>", "<head><base href=\"" + urlHistorial + "\">");
+                    }
+
+                    //eliminar funciones javascript para facilitar carga del navegador
+                    html = html.replaceAll("(?i)<script[\\s\\S]*?></script>", "");
+                    html = html.replaceAll("(?i)on\\w+=\"[^\"]*\"", "");
+
+                    visorHTML.setText(html);
+                }
+
+                //actualiza boton de favoritos
+                barraNavegacion.getBtnFavorito().setText(historial.esFavorito(urlHistorial) ? "★" : "☆");
+                //cambiar nombre a pestaña
+                String nombre = host;
+                if (nombre.startsWith("www.")) {
+                    nombre = nombre.substring(4);
+                }
+                int punto = nombre.indexOf(".");
+                if (punto != -1) {
+                    nombre = nombre.substring(0, punto);
+                }
+                JTabbedPane panel=pestana.getContenedor();
+                int index = panel.getSelectedIndex();
+                if (index != -1) {
+                    panel.setTitleAt(index, nombre);
+                    Component c = panel.getTabComponentAt(index);
+                    if (c instanceof JPanel) {
+                        for (Component child : ((JPanel) c).getComponents()) {
+                            if (child instanceof JLabel) {
+                                ((JLabel) child).setText(nombre);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            SwingUtilities.invokeLater(() -> estado.setText(e.getMessage()));
         }
     }
+    //metodo para mantener compatibilidad con llamadas anteriores sin el parametro de registro en avanzada
+    public void cargarURL(String nombreArchivo, JLabel estado) {
+        cargarURL(nombreArchivo, estado, true);
+    }
 
-    public void cambiarTema(Color fondo, String colorTexto) {
+
+    public void cambiarTema(java.awt.Color fondo, String colorTexto) {
         try {
-            // 1. Aplicar fondo al componente
             visorHTML.setBackground(fondo);
             String fondoHex = String.format("#%02x%02x%02x", fondo.getRed(), fondo.getGreen(), fondo.getBlue());
 
-            // 2. Obtener el código y preparar el estilo inyectado
-            String codigoHmtl = visorHTML.getText();
-            String estiloInyectado = "<style>" +
-                    "body { background-color: " + fondoHex + " !important; color: " + colorTexto + " !important; }" +
-                    "* { color: " + colorTexto + " !important; }" +
-                    "</style>";
+            HTMLEditorKit kit = (HTMLEditorKit) visorHTML.getEditorKit();
+            StyleSheet hojaEstilos = kit.getStyleSheet();
+            String reglaFondo = "body, div, table, tr, td, span, center, form, p, input {" +
+                    " background-color: " + fondoHex + " !important;" +
+                    " background: " + fondoHex + " !important;" +
+                    " color: " + colorTexto + " !important;" +
+                    "}";
 
-            // Insertar estilo
-            if (codigoHmtl.contains("<html>")) {
-                codigoHmtl = codigoHmtl.replace("<html>", "<html>" + estiloInyectado);
-            }
+            String reglaTexto = "* { color: " + colorTexto + " !important; }";
 
-            // 3. Obtener la carpeta actual para no perder los links
-            String carpetaNativa = System.getProperty("user.dir");
-            File directorioBase = new File(carpetaNativa);
+            hojaEstilos.addRule(reglaFondo);
+            hojaEstilos.addRule(reglaTexto);
 
-            // 4. Cargar el contenido y RE-ESTABLECER la base
+            java.net.URL urlActual = visorHTML.getPage();
+            String codigoHtml = visorHTML.getText();
+
             visorHTML.setContentType("text/html");
-            visorHTML.setText(codigoHmtl);
+            visorHTML.setText(codigoHtml);
 
-            // ESTO ES LO QUE ARREGLA EL ERROR DE CARGA:
-            HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
-            doc.setBase(directorioBase.toURI().toURL());
-
+            javax.swing.text.html.HTMLDocument doc = (javax.swing.text.html.HTMLDocument) visorHTML.getDocument();
+            if (urlActual != null) {
+                doc.setBase(urlActual);
+            } else {
+                String carpetaNativa = System.getProperty("user.dir");
+                doc.setBase(new java.io.File(carpetaNativa).toURI().toURL());
+            }
             visorHTML.repaint();
 
         } catch (Exception ex) {
-            System.out.println("Error al aplicar tema y mantener links: " + ex.getMessage());
+            System.out.println("Error al aplicar el tema: " + ex.getMessage());
         }
     }
 
@@ -174,5 +255,9 @@ public class Renderizador extends JPanel {
         } catch (Exception e) {
             System.out.println("Error al cambiar color: " + e.getMessage());
         }
+    }
+
+    public Historial getHistorial() {
+        return historial;
     }
 }

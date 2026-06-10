@@ -4,13 +4,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class BarraNavegacion extends JPanel {
-<<<<<<< Updated upstream
-    private JTextField barra;
-    private JButton btnBuscar;
-    private JButton btnColor;
-    private JButton btnTexto;
-    private JTabbedPane panelPestanas;
-=======
     private final JButton btnOnline;
     private final JButton btnFavorito;
     private final JTextField barra;
@@ -18,16 +11,13 @@ public class BarraNavegacion extends JPanel {
     private final JButton btnColor;
     private final JButton btnTexto;
     private final JButton btnHistorial;
-    private Renderizador renderizador;
->>>>>>> Stashed changes
+
 
     public BarraNavegacion(Renderizador renderizador, JLabel estado, JTabbedPane panelPestanas) {
         this.panelPestanas = panelPestanas;
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setOpaque(false);
 
-<<<<<<< Updated upstream
-=======
         //Boton para modo Online/Offline
         btnOnline = new JButton("●");
         btnOnline.setForeground(new Color(0, 204, 0));
@@ -57,6 +47,18 @@ public class BarraNavegacion extends JPanel {
             }
         });
 
+    private final JButton btnAtras;
+    private final JButton btnAdelante;
+
+    private Renderizador renderizador;
+
+
+    public BarraNavegacion(JLabel estado, JTabbedPane panelPestanas) {
+        this.setLayout(new BorderLayout(5, 0));
+        //setLayout(new FlowLayout(FlowLayout.LEFT));
+        setOpaque(false);
+        JPanel pIzquierdo = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        JPanel pDerecho = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
 
         //boton favoritos
         btnFavorito = new JButton("☆");
@@ -67,7 +69,7 @@ public class BarraNavegacion extends JPanel {
         btnFavorito.setBorderPainted(false);
         btnFavorito.setFocusPainted(false);
         btnFavorito.setContentAreaFilled(false);
->>>>>>> Stashed changes
+
         barra = new JTextField();
         barra.setPreferredSize(new Dimension(400, 30));
         // Aplicar a la barra de búsqueda para que no se pegue a los bordes
@@ -75,9 +77,7 @@ public class BarraNavegacion extends JPanel {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true), // Borde redondeado
                 BorderFactory.createEmptyBorder(5, 10, 5, 10) // Espacio interno (Padding)
         ));
-
-<<<<<<< Updated upstream
-=======
+        //boton recargar
         JButton btnRecargar = new JButton("↺");
         btnRecargar.setPreferredSize(new Dimension(30,30));
         btnRecargar.setMargin(new Insets(0, 0, 0, 0));
@@ -85,13 +85,69 @@ public class BarraNavegacion extends JPanel {
         btnRecargar.setBorderPainted(false);
         btnRecargar.setFocusPainted(false);
         btnRecargar.setContentAreaFilled(false);
+
         //boton borrar historial
->>>>>>> Stashed changes
+
         btnBuscar = new JButton("Ir");
         btnBuscar.setEnabled(false);
 
         btnColor = new JButton("Fondo");
         btnTexto = new JButton("Texto");
+
+
+        //boton atras
+        btnAtras = new JButton("◀");
+        btnAtras.setPreferredSize(new Dimension(30,30));
+        btnAtras.setMargin(new Insets(0, 0, 0, 0));
+        btnAtras.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAtras.setBorderPainted(false);
+        btnAtras.setFocusPainted(false);
+        btnAtras.setContentAreaFilled(false);
+
+        //boton adelante
+        btnAdelante = new JButton("▶");
+        btnAdelante.setPreferredSize(new Dimension(30,30));
+        btnAdelante.setMargin(new Insets(0, 0, 0, 0));
+        btnAdelante.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAdelante.setBorderPainted(false);
+        btnAdelante.setFocusPainted(false);
+        btnAdelante.setContentAreaFilled(false);
+
+        //boton borrar historial
+        btnBuscar = new JButton("\uD83D\uDD0E");
+        btnBuscar.setEnabled(false);
+        btnBuscar.setFocusPainted(false);
+        btnBuscar.setBorder(new javax.swing.border.LineBorder(Color.GRAY, 1, true));
+        btnBuscar.setPreferredSize(new Dimension(30,26));
+
+        btnColor = new JButton("🎨");
+        btnColor.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnColor.setPreferredSize(new Dimension(40, 30));
+        btnColor.setMargin(new Insets(0, 0, 0, 0));
+        btnColor.setBorderPainted(false);
+        btnColor.setContentAreaFilled(false);
+        btnColor.setFocusPainted(false);
+        btnColor.setToolTipText("Cambiar tema de fondo");
+        btnColor.setFocusPainted(false);
+
+        btnTexto = new JButton("🅰");
+        btnTexto.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnTexto.setPreferredSize(new Dimension(40, 30));
+        btnTexto.setMargin(new Insets(0, 0, 0, 0));
+        btnTexto.setBorderPainted(false);
+        btnTexto.setContentAreaFilled(false);
+        btnTexto.setFocusPainted(false);
+        btnTexto.setToolTipText("Cambiar color de texto");
+
+        btnHistorial = new JButton("📋");
+        btnHistorial.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnHistorial.setPreferredSize(new Dimension(40, 30));
+        btnHistorial.setMargin(new Insets(0, 0, 0, 0));
+        btnHistorial.setBorderPainted(false);
+        btnHistorial.setContentAreaFilled(false);
+        btnHistorial.setFocusPainted(false);
+        btnHistorial.setToolTipText("Ver historial de navegación");
+
 
         // Activar/Desactivar botón
         barra.getDocument().addDocumentListener(new DocumentListener() {
@@ -99,7 +155,7 @@ public class BarraNavegacion extends JPanel {
             public void removeUpdate(DocumentEvent e) { verificar(); }
             public void changedUpdate(DocumentEvent e) { verificar(); }
             private void verificar() {
-                btnBuscar.setEnabled(barra.getText().trim().length() > 0);
+                btnBuscar.setEnabled(!barra.getText().trim().isEmpty());
             }
         });
 
@@ -110,51 +166,46 @@ public class BarraNavegacion extends JPanel {
         opcion.add(pegar);
         barra.setComponentPopupMenu(opcion);
 
-        btnBuscar.addActionListener(e -> {
-            String ruta = barra.getText();
-            renderizador.cargarURL(ruta, estado);
-
-            // 1. Obtener nombre del archivo
-            java.io.File archivo = new java.io.File(ruta);
-            String nombre = archivo.getName();
-
-            // 2. Quitar extensión
-            int punto = nombre.lastIndexOf('.');
-            if (punto != -1) {
-                nombre = nombre.substring(0, punto);
-            }
-
-            // 3. Aplicar a la pestaña usando la referencia guardada
-            int index = panelPestanas.getSelectedIndex();
-            if (index != -1 && !nombre.isEmpty()) {
-                // Obtenemos el componente del header (el JLabel que está dentro del pnlHeader)
-                Component c = panelPestanas.getTabComponentAt(index);
-                if (c instanceof JPanel) {
-                    JPanel pnl = (JPanel) c;
-                    for (Component child : pnl.getComponents()) {
-                        if (child instanceof JLabel) {
-                            ((JLabel) child).setText(nombre);
-                            break;
-                        }
-                    }
-                }
-                // También cambiamos el título interno por seguridad
-                panelPestanas.setTitleAt(index, nombre);
-            }
+        btnRecargar.addActionListener(e -> {
+            new Thread(() ->{
+                String[] separarurl=renderizador.getHistorial().getRegistros().getFirst().split("- ");
+                String historialurl=separarurl[1];
+                renderizador.cargarURL(historialurl,estado);
+            }).start();
         });
 
-<<<<<<< Updated upstream
-        add(barra);
-        add(btnBuscar);
-        add(btnColor);
-        add(btnTexto);
-=======
+
+
+        btnFavorito.addActionListener(e -> {
+            String textoBarra = barra.getText().trim();
+            if (textoBarra.isEmpty()) return;
+            if (!textoBarra.startsWith("http://") && !textoBarra.startsWith("https://")) {
+                textoBarra = "http://" + textoBarra;
+            }
+
+            try {
+                String url = java.net.URI.create(textoBarra).toURL().toString();
+                renderizador.getHistorial().alternarFavorito(url);
+                boolean esFav = renderizador.getHistorial().esFavorito(url);
+                btnFavorito.setText(esFav ? "★" : "☆");
+
+            } catch (Exception _) {
+            }
+        });
+        btnBuscar.addActionListener(e -> {
+            new Thread(() ->{
+                renderizador.cargarURL(barra.getText(),estado);
+            }).start();
+        });
+
+
+        pIzquierdo.add(btnAtras);
+        pIzquierdo.add(btnAdelante);
         pIzquierdo.add(btnRecargar);
         pIzquierdo.add(btnFavorito);
         pIzquierdo.add(barra);
         pIzquierdo.add(btnBuscar);
 
-        pDerecho.add(btnOnline);
         pDerecho.add(btnColor);
         pDerecho.add(btnTexto);
         pDerecho.add(btnHistorial);
@@ -162,7 +213,7 @@ public class BarraNavegacion extends JPanel {
         this.add(pIzquierdo, BorderLayout.CENTER);
         this.add(pDerecho, BorderLayout.EAST);
         //add(javax.swing.Box.createHorizontalGlue());
->>>>>>> Stashed changes
+
     }
 
     public JButton getBtnColor() {
@@ -170,5 +221,21 @@ public class BarraNavegacion extends JPanel {
     }
     public JButton getBtnTexto() {
         return btnTexto;
+    }
+    public JButton getBtnHistorial() {
+        return btnHistorial;
+    }
+    public JButton getBtnFavorito() {
+        return btnFavorito;
+    }
+    public JButton getBtnAtras() {return btnAtras;}
+    public JButton getBtnAdelante() {return btnAdelante;}
+
+    public void setRenderizador(Renderizador renderizador) {
+        this.renderizador = renderizador;
+    }
+
+    public JTextField getBarra() {
+        return barra;
     }
 }

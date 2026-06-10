@@ -22,10 +22,11 @@ public class Ventana extends JFrame {
 
     private void configurarBarraSuperior() {
         JPanel top = new JPanel(new BorderLayout());
+
+        // Título e Icono (Propio de la ventana)
         ImageIcon icono = new ImageIcon("icono.jpg");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
-        // Título e Icono (Propio de la ventana)
         JLabel titulo = new JLabel("Brave 2", iconoFinal, JLabel.LEFT);
         titulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 
@@ -68,11 +69,10 @@ public class Ventana extends JFrame {
         Pestana.agregarNueva(panelPestanas);
     }
 
-    // El método cerrarNavegador se queda aquí porque usa "this" (la ventana)
     private void cerrarNavegador() {
         int tabs = panelPestanas.getTabCount() - 1;
         if (tabs > 0) {
-            if (JOptionPane.showConfirmDialog(this, "¿Cerrar " + tabs + " pestañas?", "Salir", 0) == 0) {
+            if (JOptionPane.showConfirmDialog(this, "¿Cerrar " + tabs + " pestañas?", "Salir", JOptionPane.YES_NO_OPTION) == 0) {
                 System.exit(0);
             }
         } else {
