@@ -86,6 +86,36 @@ public class BarraNavegacion extends JPanel {
         btnRecargar.setFocusPainted(false);
         btnRecargar.setContentAreaFilled(false);
 
+<<<<<<< Updated upstream
+=======
+        //boton borrar historial
+
+        btnBuscar = new JButton("Ir");
+        btnBuscar.setEnabled(false);
+
+        btnColor = new JButton("Fondo");
+        btnTexto = new JButton("Texto");
+
+
+        //boton atras
+        btnAtras = new JButton("◀");
+        btnAtras.setPreferredSize(new Dimension(30,30));
+        btnAtras.setMargin(new Insets(0, 0, 0, 0));
+        btnAtras.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAtras.setBorderPainted(false);
+        btnAtras.setFocusPainted(false);
+        btnAtras.setContentAreaFilled(false);
+
+        //boton adelante
+        btnAdelante = new JButton("▶");
+        btnAdelante.setPreferredSize(new Dimension(30,30));
+        btnAdelante.setMargin(new Insets(0, 0, 0, 0));
+        btnAdelante.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        btnAdelante.setBorderPainted(false);
+        btnAdelante.setFocusPainted(false);
+        btnAdelante.setContentAreaFilled(false);
+
+>>>>>>> Stashed changes
         //boton borrar historial
 
         btnBuscar = new JButton("Ir");
