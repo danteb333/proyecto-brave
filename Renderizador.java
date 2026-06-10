@@ -6,7 +6,9 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 
 public class Renderizador extends JPanel {
     private final JEditorPane visorHTML;
@@ -16,18 +18,21 @@ public class Renderizador extends JPanel {
     private final BarraNavegacion barraNavegacion;
     private NavegaAvanzada navegaAvanzada;
 
-    public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
+    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
+        this.navegaAvanzada = navegaAvanzada;
+    }
+
+    public Renderizador(JLabel estado, JTextField barra, Pestana pestana, Historial historial, BarraNavegacion barraNavegacion) {
         setLayout(new BorderLayout());
         visorHTML = new JEditorPane();
         visorHTML.setEditable(false);
         visorHTML.setCursor(new Cursor(Cursor.HAND_CURSOR));
         visorHTML.setContentType("text/html");
-        this.clienteHTTP=new ClienteHTTP();
-        this.historial=historial;
-        this.pestana=pestana;
-        this.barraNavegacion=barraNavegacion;
+        this.clienteHTTP = new ClienteHTTP();
+        this.historial = historial;
+        this.pestana = pestana;
+        this.barraNavegacion = barraNavegacion;
 
-        // Contenido por defecto
         visorHTML.setText("<html><body style='text-align:center; font-family:Arial;'>"
                 + "<h1>Hola, bienvenidos a nuestro navegador</h1>"
                 + "</body></html>");
@@ -39,9 +44,6 @@ public class Renderizador extends JPanel {
         add(scroll, BorderLayout.CENTER);
     }
 
-    public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
-        this.navegaAvanzada = navegaAvanzada;
-    }
     public void configurarEventos(JLabel estado, JTextField barra) {
         visorHTML.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -68,8 +70,7 @@ public class Renderizador extends JPanel {
         });
     }
 
-    public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
-
+    public void cargarURL(String nombreArchivo, JLabel estado, Boolean registrarenAvanzada) {
         if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
             nombreArchivo = "http://" + nombreArchivo;
         }
@@ -80,109 +81,73 @@ public class Renderizador extends JPanel {
             String host = url.getHost();
             String path = (url.getPath() == null || url.getPath().isEmpty()) ? "/" : url.getPath();
 
-            int puertoIngresado = url.getPort();
-            int[] puertos = (puertoIngresado != -1) ? new int[]{puertoIngresado} : new int[]{80, 443, 3000};
-
+            String[] nuevaurl = host.split("\\.");
+            int[] puertos = {80, 443};
             boolean conectado = false;
 
             for (int puertoEscogido : puertos) {
                 if (clienteHTTP.conectar(host, estado, path, puertoEscogido)) {
                     String status = clienteHTTP.getFirstLine();
 
-                    if (status == null || status.isEmpty()) continue;
-
                     if (puertoEscogido == 80 && (status.contains("301") || status.contains("302"))) {
                         continue;
                     }
+
                     if (status.contains("200") || status.contains("301") || status.contains("302")) {
                         conectado = true;
-                        String protocolo = (puertoEscogido == 443) ? "https://" : (puertoEscogido == 80) ? "http://" : "http://";
-                        String stringPuerto = (puertoEscogido != 80 && puertoEscogido != 443) ? (":" + puertoEscogido) : "";
-                        urlFinal = protocolo + host + stringPuerto + path;
+                        urlFinal = (puertoEscogido == 443 ? "https://" : "http://") + host + path;
                         break;
                     }
                 }
             }
 
             if (!conectado) {
-                SwingUtilities.invokeLater(() -> estado.setText("No se pudo acceder a la página"));
+                SwingUtilities.invokeLater(() -> estado.setText("No se pudo acceder a la pagina"));
                 return;
             }
-
-            //cambio nombre para historial en caso de ser ip o dominio
-            String hostResuelto = host;
-            try {
-                //convertir la IP a su nombre de dominio real
-                java.net.InetAddress inetAddr = java.net.InetAddress.getByName(host);
-                hostResuelto = inetAddr.getHostName();
-            } catch (java.net.UnknownHostException _) {
-            }
-
-            final String urlHistorial = urlFinal.replaceFirst(host, hostResuelto);
-            final String hostVisual = hostResuelto;
-
-            if (registrarEnHistorial && navegaAvanzada != null) {
-                navegaAvanzada.registrarVisitaNueva(urlHistorial);
-            }
+            final String urlHistorial = urlFinal;
 
             SwingUtilities.invokeLater(() -> {
                 estado.setText(clienteHTTP.getFirstLine());
                 barraNavegacion.getBarra().setText(urlHistorial);
-                //mejora para ip
-                String urlfnl = hostVisual;
-                if (!esIP(hostVisual)) {
-                    if (hostVisual.contains("www.")) {
-                        urlfnl = hostVisual.replace("www.", "");
-                    } else if (hostVisual.split("\\.").length > 2) {
-                        urlfnl = hostVisual.split("\\.")[1];
-                    }
-                }
-
-                if (registrarEnHistorial) {
-                    historial.agregarVisita(urlHistorial, urlfnl);
-                }
-                //historial.agregarVisita(urlHistorial,urlfnl);
+                String urlfnl = nuevaurl[0];
+                if (nuevaurl[0].contains("www"))
+                    urlfnl = nuevaurl[1];
+                historial.agregarVisita(urlHistorial, urlfnl);
                 visorHTML.setContentType("text/html");
-                //con soporte de fotos
-                try{
+
+                try {
                     URL urlBase = URI.create(urlHistorial).toURL();
                     visorHTML.getDocument().putProperty(Document.StreamDescriptionProperty, urlBase);
                 } catch (MalformedURLException _) {
                 }
                 HTMLEditorKit kit = new HTMLEditorKit();
-                //carga de imagenes en segundo plano
                 kit.setAutoFormSubmission(false);
                 visorHTML.setEditorKit(kit);
 
                 String html = clienteHTTP.getContenido();
                 if (html != null) {
-                    //buscar imagenes en la misma pagina (urlHistorial)
                     if (!html.contains("<base")) {
                         html = html.replace("<head>", "<head><base href=\"" + urlHistorial + "\">");
                     }
 
-                    //eliminar funciones javascript para facilitar carga del navegador
-                    html = html.replaceAll("(?i)<script[\\s\\S]*?></script>", "");
-                    html = html.replaceAll("(?i)on\\w+=\"[^\"]*\"", "");
+                    html = filtrarYLimpiarHTML(html);
+                    html = procesarEtiquetasNoSoportadas(html);
 
                     visorHTML.setText(html);
                 }
 
-                //actualiza boton de favoritos
                 barraNavegacion.getBtnFavorito().setText(historial.esFavorito(urlHistorial) ? "★" : "☆");
-                //cambiar nombre a pestaña
-                String nombre;
-                if (esIP(hostVisual)) {
-                    nombre = hostVisual;
-                } else {
-                    nombre = hostVisual.replace("www.", "");
-                    int punto = nombre.indexOf(".");
-                    if (punto != -1) {
-                        nombre = nombre.substring(0, punto);
-                    }
+                
+                String nombre = host;
+                if (nombre.startsWith("www.")) {
+                    nombre = nombre.substring(4);
                 }
-
-                JTabbedPane panel=pestana.getContenedor();
+                int punto = nombre.indexOf(".");
+                if (punto != -1) {
+                    nombre = nombre.substring(0, punto);
+                }
+                JTabbedPane panel = pestana.getContenedor();
                 int index = panel.getSelectedIndex();
                 if (index != -1) {
                     panel.setTitleAt(index, nombre);
@@ -196,7 +161,13 @@ public class Renderizador extends JPanel {
                         }
                     }
                 }
+                String UrlPila = urlHistorial + " - " + urlfnl;
+
+                if (registrarenAvanzada && navegaAvanzada != null) {
+                    navegaAvanzada.registrarVisita(UrlPila);
+                }
             });
+
         } catch (Exception e) {
             SwingUtilities.invokeLater(() -> estado.setText(e.getMessage()));
         }
@@ -206,7 +177,35 @@ public class Renderizador extends JPanel {
         cargarURL(nombreArchivo, estado, true);
     }
 
-    public void cambiarTema(Color fondo, String colorTexto) {
+    private String filtrarYLimpiarHTML(String htmlOriginal) {
+        if (htmlOriginal == null) return "";
+        String htmlFiltrado = htmlOriginal;
+
+        htmlFiltrado = htmlFiltrado.replaceAll("(?i)<script[\\s\\S]*?></script>", "");
+        htmlFiltrado = htmlFiltrado.replaceAll("(?i)on\\w+=\"[^\"]*\"", "");
+        htmlFiltrado = htmlFiltrado.replaceAll("(?i)<head>[\\s\\S]*?</head>", "");
+        htmlFiltrado = htmlFiltrado.replaceAll("(?i)<meta[^>]*>", "");
+
+        return htmlFiltrado;
+    }
+
+    private String procesarEtiquetasNoSoportadas(String html) {
+        if (html == null) return "";
+
+        String[] etiquetasIncompatibles = {"video", "audio", "canvas", "iframe", "svg"};
+
+        for (String etiqueta : etiquetasIncompatibles) {
+            String regex = "(?i)<" + etiqueta + "[^>]*>[\\s\\S]*?</" + etiqueta + ">|<" + etiqueta + "[^>]*/>";
+            String mensajeError = "<b style='color: red; font-family: Arial;'>"
+                    + "[Este elemento no se puede renderizar - " + etiqueta.toUpperCase() + "]"
+                    + "</b>";
+            html = html.replaceAll(regex, mensajeError);
+        }
+
+        return html;
+    }
+
+    public void cambiarTema(java.awt.Color fondo, String colorTexto) {
         try {
             visorHTML.setBackground(fondo);
             String fondoHex = String.format("#%02x%02x%02x", fondo.getRed(), fondo.getGreen(), fondo.getBlue());
@@ -224,18 +223,18 @@ public class Renderizador extends JPanel {
             hojaEstilos.addRule(reglaFondo);
             hojaEstilos.addRule(reglaTexto);
 
-            URL urlActual = visorHTML.getPage();
+            java.net.URL urlActual = visorHTML.getPage();
             String codigoHtml = visorHTML.getText();
 
             visorHTML.setContentType("text/html");
             visorHTML.setText(codigoHtml);
 
-            HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
+            javax.swing.text.html.HTMLDocument doc = (javax.swing.text.html.HTMLDocument) visorHTML.getDocument();
             if (urlActual != null) {
                 doc.setBase(urlActual);
             } else {
                 String carpetaNativa = System.getProperty("user.dir");
-                doc.setBase(new File(carpetaNativa).toURI().toURL());
+                doc.setBase(new java.io.File(carpetaNativa).toURI().toURL());
             }
             visorHTML.repaint();
 
@@ -246,20 +245,15 @@ public class Renderizador extends JPanel {
 
     public void cambiarColorTexto(String colorHex) {
         try {
-            // 1. Obtenemos el kit y el estilo
             HTMLEditorKit kit = (HTMLEditorKit) visorHTML.getEditorKit();
             StyleSheet estilo = kit.getStyleSheet();
 
-            // 2. Aplicamos la regla al cuerpo, párrafos, listas y etiquetas de texto comunes
-            // Usamos !important para asegurar que ignore estilos previos
             String regla = String.format("body, p, li, div, h1, h2, h3 { color: %s !important; }", colorHex);
             estilo.addRule(regla);
 
-            // 3. REPASO CRÍTICO: Para que el texto que ya está cargado cambie,
-            // a veces es necesario refrescar el modelo de texto completamente:
             String contenidoActual = visorHTML.getText();
-            visorHTML.setDocument(kit.createDefaultDocument()); // Reinicia el documento
-            visorHTML.setText(contenidoActual); // Reinyecta el texto con el nuevo estilo aplicado
+            visorHTML.setDocument(kit.createDefaultDocument()); 
+            visorHTML.setText(contenidoActual); 
 
             visorHTML.repaint();
             visorHTML.revalidate();
@@ -271,9 +265,5 @@ public class Renderizador extends JPanel {
 
     public Historial getHistorial() {
         return historial;
-    }
-
-    private boolean esIP(String host) {
-        return host.matches("(\\d{1,3}\\.){3}\\d{1,3}");
     }
 }
