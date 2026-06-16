@@ -9,8 +9,8 @@ public class BarraNavegacion extends JPanel {
     private final JButton btnFavorito;
     private final JTextField barra;
     private final JButton btnBuscar;
-    private final JButton btnColor;
-    private final JButton btnTexto;
+    private final JButton btnTema;
+    private final JButton btnAsistIA;
     private final JButton btnHistorial;
     private Renderizador renderizador;
 
@@ -71,27 +71,35 @@ public class BarraNavegacion extends JPanel {
         btnBuscar.setBorder(new javax.swing.border.LineBorder(Color.GRAY, 1, true));
         btnBuscar.setPreferredSize(new Dimension(30,26));
 
-        btnColor = new JButton("🎨");
-        btnColor.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-        btnColor.setPreferredSize(new Dimension(40, 30));
-        btnColor.setMargin(new Insets(0, 0, 0, 0));
-        btnColor.setBorderPainted(false);
-        btnColor.setContentAreaFilled(false);
-        btnColor.setFocusPainted(false);
-        btnColor.setToolTipText("Cambiar tema de fondo");
-        btnColor.setFocusPainted(false);
+        // boton tema
+        btnTema = new JButton("🔆");
+        btnTema.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnTema.setPreferredSize(new Dimension(40, 30));
+        btnTema.setMargin(new Insets(0, 0, 0, 0));
+        btnTema.setBorderPainted(false);
+        btnTema.setContentAreaFilled(false);
+        btnTema.setFocusPainted(false);
+        btnTema.setToolTipText("Modo Oscuro / Claro");
 
-        btnTexto = new JButton("🅰");
-        btnTexto.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-        btnTexto.setPreferredSize(new Dimension(40, 30));
-        btnTexto.setMargin(new Insets(0, 0, 0, 0));
-        btnTexto.setBorderPainted(false);
-        btnTexto.setContentAreaFilled(false);
-        btnTexto.setFocusPainted(false);
-        btnTexto.setToolTipText("Cambiar color de texto");
+        // boton configuracion
 
-        btnHistorial = new JButton("📋");
-        btnHistorial.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        //boton asistenteIA
+        btnAsistIA = new JButton("✨");
+        btnAsistIA.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnAsistIA.setPreferredSize(new Dimension(40, 30));
+        btnAsistIA.setMargin(new Insets(0, 0, 0, 0));
+        btnAsistIA.setBorderPainted(false);
+        btnAsistIA.setContentAreaFilled(false);
+        btnAsistIA.setFocusPainted(false);
+        btnAsistIA.setToolTipText("Buscar con IA");
+
+        //boton historial
+        ImageIcon icono = new ImageIcon("btnhistorial1.png");
+        Image imagenRedimensionada = icono.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
+        ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
+
+
+        btnHistorial = new JButton(iconoFinal);
         btnHistorial.setPreferredSize(new Dimension(40, 30));
         btnHistorial.setMargin(new Insets(0, 0, 0, 0));
         btnHistorial.setBorderPainted(false);
@@ -144,6 +152,12 @@ public class BarraNavegacion extends JPanel {
                 renderizador.cargarURL(barra.getText(),estado);
             }).start();
         });
+        barra.addActionListener(e -> {
+            // Solo busca si el botón está habilitado
+            if (btnBuscar.isEnabled()) {
+                btnBuscar.doClick(); // Esto simula un clic perfecto en el botón btnBuscar
+            }
+        });
 
         pIzquierdo.add(btnAtras);
         pIzquierdo.add(btnAdelante);
@@ -152,26 +166,27 @@ public class BarraNavegacion extends JPanel {
         pIzquierdo.add(barra);
         pIzquierdo.add(btnBuscar);
 
-        pDerecho.add(btnColor);
-        pDerecho.add(btnTexto);
+        pDerecho.add(btnTema);
+        pDerecho.add(btnAsistIA);
         pDerecho.add(btnHistorial);
+
+
 
         this.add(pIzquierdo, BorderLayout.CENTER);
         this.add(pDerecho, BorderLayout.EAST);
         //add(javax.swing.Box.createHorizontalGlue());
     }
 
-    public JButton getBtnColor() {
-        return btnColor;
-    }
-    public JButton getBtnTexto() {
-        return btnTexto;
-    }
+    public JButton getBtnTema() { return btnTema; }
     public JButton getBtnHistorial() {
         return btnHistorial;
     }
     public JButton getBtnFavorito() {
         return btnFavorito;
+    }
+
+    public JButton getBtnAsistIA() {
+        return btnAsistIA;
     }
 
     public void setRenderizador(Renderizador renderizador) {

@@ -7,7 +7,7 @@ public class Pestana extends JPanel {
     private final String titulo;
     private final JTabbedPane contenedor;
     private final JLabel lblEstado=new JLabel("");
-
+    private boolean esModoOscuro = false;
 
     // El constructor configura el contenido visual de la pestaña
     public Pestana(String titulo, JTabbedPane contenedor) {
@@ -26,11 +26,13 @@ public class Pestana extends JPanel {
         NavegaAvanzada navegaAvanzada = new NavegaAvanzada(barraNavegacion.getBtnAtras(), barraNavegacion.getBtnAdelante());
         renderizador.setNavegaAvanzada(navegaAvanzada);
 
-        // 2. Configurar la lógica de los botones de la barra de navegación
-        configurarMenuColores(barraNavegacion.getBtnColor(),renderizador);
-        configurarMenuTexto(barraNavegacion.getBtnTexto(), renderizador);
+        // Configurar la lógica de los botones de la barra de navegación
+        configurarBotonTema(barraNavegacion.getBtnTema(), renderizador);
+
         configurarMenuHistorial(barraNavegacion.getBtnHistorial(),renderizador,historial,barraNavegacion);
 
+        //accion boton IA
+        barraNavegacion.getBtnAsistIA().addActionListener(e -> renderizador.alternarIA());
 
         //accion de boton atrás
         barraNavegacion.getBtnAtras().addActionListener(e -> {
@@ -117,35 +119,21 @@ public class Pestana extends JPanel {
         return pnlHeader;
     }
 
-    // --- MÉTODOS DE CONFIGURACIÓN DE MENÚS (Movidos desde Ventana) ---
+    // Metodos de configuracion de menus
 
-    private void configurarMenuColores(JButton btnColor, Renderizador renderizador) {
-        JPopupMenu menu = new JPopupMenu();
-        String[] temas = {"Modo Oscuro", "Modo Claro", "Modo Sepia"};
-        Color[] fondos = {new Color(45, 45, 45), Color.WHITE, new Color(250, 240, 230)};
-        String[] textos = {"#FFFFFF", "#000000", "#5D4037"};
-
-        for (int i = 0; i < temas.length; i++) {
-            final int idx = i;
-            JMenuItem item = new JMenuItem(temas[i]);
-            item.addActionListener(e -> renderizador.cambiarTema(fondos[idx], textos[idx]));
-            menu.add(item);
-        }
-        btnColor.addActionListener(e -> menu.show(btnColor, 0, btnColor.getHeight()));
-    }
-
-    private void configurarMenuTexto(JButton btnTexto,Renderizador renderizador) {
-        JPopupMenu menu = new JPopupMenu();
-        String[] nombres = {"Blanco", "Negro", "Azul"};
-        String[] coloresHex = {"#FFFFFF", "#000000", "#0000FF"};
-
-        for (int i = 0; i < nombres.length; i++) {
-            final int idx = i;
-            JMenuItem item = new JMenuItem(nombres[i]);
-            item.addActionListener(e -> renderizador.cambiarColorTexto(coloresHex[idx]));
-            menu.add(item);
-        }
-        btnTexto.addActionListener(e -> menu.show(btnTexto, 0, btnTexto.getHeight()));
+    private void configurarBotonTema(JButton btnTema, Renderizador renderizador) {
+        btnTema.addActionListener(e -> {
+            esModoOscuro = !esModoOscuro;
+            if (esModoOscuro) {
+                btnTema.setText("🌙");
+                btnTema.setToolTipText("Cambiar a Modo Claro");
+                renderizador.cambiarTema(new Color(45, 45, 45), "#FFFFFF");
+            } else {
+                btnTema.setText("🔆");
+                btnTema.setToolTipText("Cambiar a Modo Oscuro");
+                renderizador.cambiarTema(Color.WHITE, "#000000");
+            }
+        });
     }
 
     public void configurarMenuHistorial(JButton btnHistorial,Renderizador renderizador,Historial historial,BarraNavegacion barraNavegacion){
