@@ -1,11 +1,9 @@
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class Historial {
 
-    // Clase interna para guardar (url,titulo)
-
-    private LinkedList<String> entradas;
-    private int limite_historial = 10;
+    private final LinkedList<String> entradas;
 
     public Historial(){
         this.entradas = new LinkedList<>();
@@ -13,7 +11,7 @@ public class Historial {
 
     public void agregarVisita(String url, String titulo){
         //1. NO guarda URLS duplicadas consecutivas
-        if(!entradas.isEmpty() && entradas.getFirst().equals(url+" - "+url)){
+        if(!entradas.isEmpty() && entradas.getFirst().equals(titulo+" - "+url)){
             return;
         }
 
@@ -21,15 +19,30 @@ public class Historial {
         entradas.addFirst(titulo+" - "+url);
 
         //3. Limita el historial a las ultimas 10 entradas
-        if(entradas.size() > limite_historial){
+        if(entradas.size() > 10){
             entradas.removeLast();
         }
     }
-    public LinkedList<String> getEntradas(){
+    public LinkedList<String> getRegistros(){
         return entradas;
     }
     public void limpiarHistorial(){
         entradas.clear();
+    }
+
+    //favoritos
+    private final HashSet<String> favoritos = new HashSet<>();
+
+    public boolean esFavorito(String url) {
+        return favoritos.contains(url);
+    }
+
+    public void alternarFavorito(String url) {
+        if (favoritos.contains(url)) {
+            favoritos.remove(url);
+        } else {
+            favoritos.add(url);
+        }
     }
 }
 
