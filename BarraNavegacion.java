@@ -9,12 +9,10 @@ public class BarraNavegacion extends JPanel {
     private final JButton btnFavorito;
     private final JTextField barra;
     private final JButton btnBuscar;
-<<<<<<< HEAD
     private final JButton btnColor;
     private final JButton btnTexto;
     private final JButton btnAsistIA;
     private final JButton btnMotorBusqueda;
-=======
     private final JButton btnTema;
     private final JButton btnAsistIA;
     private final JButton btnHistorial;
@@ -98,8 +96,6 @@ public class BarraNavegacion extends JPanel {
         btnAsistIA.setContentAreaFilled(false);
         btnAsistIA.setFocusPainted(false);
         btnAsistIA.setToolTipText("Buscar con IA");
-
-<<<<<<< HEAD
         //boton motor de busqueda
         ImageIcon icono = new ImageIcon("brave.png");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
@@ -117,7 +113,6 @@ public class BarraNavegacion extends JPanel {
         //boton historial
         btnHistorial = new JButton("📋");
         btnHistorial.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-=======
         //boton historial
         ImageIcon icono = new ImageIcon("btnhistorial1.png");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
@@ -191,12 +186,10 @@ public class BarraNavegacion extends JPanel {
         pIzquierdo.add(barra);
         pIzquierdo.add(btnBuscar);
 
-<<<<<<< HEAD
         pDerecho.add(btnColor);
         pDerecho.add(btnTexto);
         pDerecho.add(btnAsistIA);
         pDerecho.add(btnMotorBusqueda);
-=======
         pDerecho.add(btnTema);
         pDerecho.add(btnAsistIA);
         pDerecho.add(btnHistorial);
