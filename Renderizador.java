@@ -7,6 +7,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
 import java.net.*;
+import java.nio.file.Files;
 
 public class Renderizador extends JPanel {
     private final JEditorPane visorHTML;
@@ -54,12 +55,37 @@ public class Renderizador extends JPanel {
     public void configurarEventos(JLabel estado, JTextField barra) {
         visorHTML.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                URL urlBase = visorHTML.getPage();
-                String urlClickeada = (e.getURL() != null) ? e.getURL().toString() : e.getDescription();
-                if (urlClickeada.startsWith("http://")) {
-                    urlClickeada = urlClickeada.replace("http://", "");
-                } else if (urlClickeada.startsWith("https://")) {
-                    urlClickeada = urlClickeada.replace("https://", "");
+                String urlClickeada = "";
+
+                if(Ventana.Modo()){
+                    try{
+                        if (e.getURL() != null) {
+                            urlClickeada = e.getURL().getFile();
+                            // Si la ruta es absoluta (trae C:/), extraemos solo el nombre
+                            if (urlClickeada.contains("/")) {
+                                urlClickeada = urlClickeada.substring(urlClickeada.lastIndexOf('/') + 1);
+                            }
+                        } else {
+                            // Si el URL es nulo por el cambio de estilo, extraemos la descripción del link
+                            urlClickeada = e.getDescription();
+                        }
+                        // Actualizamos la barra de búsqueda visualmente
+                        barra.setText(urlClickeada.replace("%20", " "));
+
+                        // Llamamos a cargarURL para que ejecute el nuevo código
+                        cargarURL(urlClickeada, estado);
+                    }catch(Exception ex) {
+                        estado.setText("Error al abrir vínculo: " + ex.getMessage());
+                    }
+
+                }else{
+                    URL urlBase = visorHTML.getPage();
+                    urlClickeada = (e.getURL() != null) ? e.getURL().toString() : e.getDescription();
+                    if (urlClickeada.startsWith("http://")) {
+                        urlClickeada = urlClickeada.replace("http://", "");
+                    } else if (urlClickeada.startsWith("https://")) {
+                        urlClickeada = urlClickeada.replace("https://", "");
+                    }
                 }
 
                 final String urlFinalAProcesar = urlClickeada;
@@ -80,49 +106,36 @@ public class Renderizador extends JPanel {
     public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
 
         if(Ventana.Modo()){
-            String rutaLocal = nombreArchivo;
-
-            boolean leido = navegaOffline.leerArchivoLocal(rutaLocal);
-            SwingUtilities.invokeLater(()->{
-                barraNavegacion.getBarra().setText(rutaLocal);
-                estado.setText(navegaOffline.getFirstLine());
-
-            });
-
-            // Configurar la base del documento para que busque fotos locales en la misma carpeta
             try {
-                File f = new File(rutaLocal);
-                if (f.exists()) {
-                    visorHTML.getDocument().putProperty(javax.swing.text.Document.StreamDescriptionProperty, f.toURI().toURL());
-                }
-            } catch (Exception l){}
+                // 1. Obtener la carpeta nativa del proyecto
+                String carpetaNativa = System.getProperty("user.dir");
+                File archivo = new File(carpetaNativa, nombreArchivo);
 
-            String html = navegaOffline.getContenido();
-            if (html != null) {
-                // Quitamos scripts pesados
-                html = html.replaceAll("(?i)<script[\\s\\S]*?></script>", "");
-                html = html.replaceAll("(?i)on\\w+=\"[^\"]*\"", "");
-                visorHTML.setText(html);
-            }
-
-            // Actualizar la pestaña con el nombre del archivo
-            File archivo = new File(rutaLocal);
-            String nombrePestana = archivo.getName().isEmpty() ? "Archivo Local" : archivo.getName();
-            JTabbedPane panel = pestana.getContenedor();
-            int index = panel.getSelectedIndex();
-            if (index != -1) {
-                panel.setTitleAt(index, nombrePestana);
-                Component c = panel.getTabComponentAt(index);
-                if (c instanceof JPanel) {
-                    for (Component child : ((JPanel) c).getComponents()) {
-                        if (child instanceof JLabel) {
-                            ((JLabel) child).setText(nombrePestana);
-                            break;
-                        }
-                    }
+                // Si el usuario puso una ruta completa, File la reconocerá automáticamente
+                if (!archivo.exists()) {
+                    archivo = new File(nombreArchivo);
                 }
+                if (archivo.exists() && archivo.isFile()) {
+                    // 2. Leer el código HTML como texto
+                    String codigo = new String(Files.readAllBytes(archivo.toPath()));
+                    // 3. Configurar el visor para que acepte HTML y links
+                    visorHTML.setContentType("text/html");
+
+                    // 4. ESTABLECER LA BASE (Crucial para que funcionen los links relativos)
+                    visorHTML.setText(codigo); // Primero inyectamos el texto
+                    HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
+                    doc.setBase(archivo.getParentFile().toURI().toURL()); // Luego fijamos la carpeta
+
+                    estado.setText("\u2713 " + archivo.getName() + " cargado");
+                    estado.setForeground(new Color(0, 102, 0)); // Verde éxito
+                } else {
+                    estado.setText("Error: Archivo no encontrado");
+                    estado.setForeground(Color.RED);
+                }
+            } catch (Exception ex) {
+                estado.setText("Error al procesar el archivo");
+                ex.printStackTrace();
             }
-            System.out.println("Entro");
 
         }else {
 
@@ -294,68 +307,40 @@ public class Renderizador extends JPanel {
     }
     //metodos IA
     private void inicializarPanelIA() {
-        final boolean[] altbtn = {false};
         //panel de contenido IA
-        panelIA=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelIA=new JPanel(new BorderLayout(5,5));
+        //label
+        JLabel labelIA = new JLabel("🤖 Hazme una pregunta");
+        labelIA.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         //campo de texto
         buscarIA = new JTextField();
-        buscarIA.setPreferredSize(new Dimension(600, 28));
+        buscarIA.setPreferredSize(new Dimension(300, 30));
         buscarIA.putClientProperty("placeholder", "Escribe tu pregunta...");
-        buscarIA.setBorder(BorderFactory.createCompoundBorder(
+        /*buscarIA.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
+        ));*/
 
         //boton buscar IA
-        JButton btnBuscarIA = new JButton("⬆");
-        btnBuscarIA.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
-        btnBuscarIA.setMargin(new Insets(7, 0, 0, 0));
-        btnBuscarIA.setPreferredSize(new Dimension(40,40));
+        JButton btnBuscarIA = new JButton("⬆️");
+        btnBuscarIA.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        btnBuscarIA.setPreferredSize(new Dimension(40, 30));
+        btnBuscarIA.setMargin(new Insets(0, 0, 0, 0));
         btnBuscarIA.setBorderPainted(false);
         btnBuscarIA.setContentAreaFilled(false);
         btnBuscarIA.setFocusPainted(false);
-        btnBuscarIA.setToolTipText("Presione para buscar");
+        //btnBuscarIA.setToolTipText("Presione para buscar");
 
         buscarIA.addActionListener(e -> {
-            if (altbtn[0])
-                return;
-            else altbtn[0] =true;
             String pregunta=buscarIA.getText().trim();
             if (pregunta.isEmpty())
                 return;
 
-            buscarIA.setEnabled(false);
             new Thread(() -> {
                 try {
                     String respuesta = AsistenteIA.callGeminiAPI(pregunta);
                     // Convierte saltos de línea a HTML
-                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px; background-color: lightblue'>"
-                            + "<b>Pregunta:</b> " + pregunta + "<br><br>"
-                            + "<b>Respuesta:</b><br><br>"
-                            + respuesta.replace("\n", "<br>")
-                            + "</body></html>";
-                    SwingUtilities.invokeLater(() -> visorHTML.setText(html));
-                } catch (Exception ex) {
-                    SwingUtilities.invokeLater(() ->
-                            visorHTML.setText("<html><body style='padding:20px; color:red'>"
-                                    + "Error: " + ex.getMessage() + "</body></html>")
-                    );
-                }
-            }).start();
-        });
-        btnBuscarIA.addActionListener(e -> {
-            if (altbtn[0])
-                return;
-            else altbtn[0] =true;
-            String pregunta=buscarIA.getText().trim();
-            if (pregunta.isEmpty())
-                return;
-            buscarIA.setEnabled(false);
-            new Thread(() -> {
-                try {
-                    String respuesta = AsistenteIA.callGeminiAPI(pregunta);
-                    // Convierte saltos de línea a HTML
-                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px; background-color: lightblue'>"
+                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px'>"
                             + "<b>Pregunta:</b> " + pregunta + "<br><br>"
                             + "<b>Respuesta:</b><br><br>"
                             + respuesta.replace("\n", "<br>")
@@ -370,11 +355,13 @@ public class Renderizador extends JPanel {
             }).start();
         });
 
+
+        //panelIA.add(labelIA);
 
         panelIA.add(buscarIA);
-        panelIA.add(btnBuscarIA);
+        //panelIA.add(btnBuscarIA);
         panelIA.setVisible(false);
-        add(panelIA,BorderLayout.SOUTH);
+        add(panelIA,BorderLayout.NORTH);
 
     }
     public void alternarIA() {
@@ -385,8 +372,7 @@ public class Renderizador extends JPanel {
             panelIA.setVisible(true);
             buscarIA.setText("");
             buscarIA.requestFocus();
-            visorHTML.setText("<html><body style='font-family:Segoe UI; padding:100px; color:gray; font-size:30px'>"
-                    + "<p>🤖 Hazme una pregunta.</p></body></html>");
+            visorHTML.setText("<html><body style='font-family:Segoe UI; padding:50px; color:gray'>" + "<p>Escribe tu pregunta arriba y presiona Enter.</p></body></html>");
         } else {
             panelIA.setVisible(false);
             barraNavegacion.getBarra().setEnabled(true);
