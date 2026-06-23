@@ -9,12 +9,9 @@ public class BarraNavegacion extends JPanel {
     private final JButton btnFavorito;
     private final JTextField barra;
     private final JButton btnBuscar;
-    private final JButton btnColor;
-    private final JButton btnTexto;
     private final JButton btnAsistIA;
     private final JButton btnMotorBusqueda;
     private final JButton btnTema;
-    private final JButton btnAsistIA;
     private final JButton btnHistorial;
     private Renderizador renderizador;
 
@@ -74,8 +71,7 @@ public class BarraNavegacion extends JPanel {
         btnBuscar.setFocusPainted(false);
         btnBuscar.setBorder(new javax.swing.border.LineBorder(Color.GRAY, 1, true));
         btnBuscar.setPreferredSize(new Dimension(30,26));
-
-        // boton tema
+        //boton cambiar tema
         btnTema = new JButton("🔆");
         btnTema.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
         btnTema.setPreferredSize(new Dimension(40, 30));
@@ -85,7 +81,7 @@ public class BarraNavegacion extends JPanel {
         btnTema.setFocusPainted(false);
         btnTema.setToolTipText("Modo Oscuro / Claro");
 
-        // boton configuracion
+
 
         //boton asistenteIA
         btnAsistIA = new JButton("✨");
@@ -96,8 +92,9 @@ public class BarraNavegacion extends JPanel {
         btnAsistIA.setContentAreaFilled(false);
         btnAsistIA.setFocusPainted(false);
         btnAsistIA.setToolTipText("Buscar con IA");
+
         //boton motor de busqueda
-        ImageIcon icono = new ImageIcon("brave.png");
+        ImageIcon icono = new ImageIcon("coward.png");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
         ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
         btnMotorBusqueda = new JButton(iconoFinal);
@@ -111,15 +108,11 @@ public class BarraNavegacion extends JPanel {
         btnMotorBusqueda.setToolTipText("Ver historial de navegación");
 
         //boton historial
-        btnHistorial = new JButton("📋");
-        btnHistorial.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-        //boton historial
-        ImageIcon icono = new ImageIcon("btnhistorial1.png");
-        Image imagenRedimensionada = icono.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
-        ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
+        ImageIcon icono2 = new ImageIcon("btnhistorial1.png");
+        Image imagenRedimensionada2 = icono2.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
+        ImageIcon iconoFinal2 = new ImageIcon(imagenRedimensionada2);
 
-
-        btnHistorial = new JButton(iconoFinal);
+        btnHistorial = new JButton(iconoFinal2);
         btnHistorial.setPreferredSize(new Dimension(40, 30));
         btnHistorial.setMargin(new Insets(0, 0, 0, 0));
         btnHistorial.setBorderPainted(false);
@@ -151,6 +144,7 @@ public class BarraNavegacion extends JPanel {
                 renderizador.cargarURL(historialurl,estado);
             }).start();
         });
+        //boton favorito
         btnFavorito.addActionListener(e -> {
             String textoBarra = barra.getText().trim();
             if (textoBarra.isEmpty()) return;
@@ -167,17 +161,23 @@ public class BarraNavegacion extends JPanel {
             } catch (Exception _) {
             }
         });
+
+        //boton buscar
         btnBuscar.addActionListener(e -> {
             new Thread(() ->{
                 renderizador.cargarURL(barra.getText(),estado);
             }).start();
         });
+
+        // Permite presionar Enter en la barra de busqueda para activar el boton de busqueda
+
         barra.addActionListener(e -> {
-            // Solo busca si el botón está habilitado
+            // Solo busca si el boton está habilitado
             if (btnBuscar.isEnabled()) {
-                btnBuscar.doClick(); // Esto simula un clic perfecto en el botón btnBuscar
+                btnBuscar.doClick(); // Simula un click con el Enter
             }
         });
+
 
         pIzquierdo.add(btnAtras);
         pIzquierdo.add(btnAdelante);
@@ -186,22 +186,18 @@ public class BarraNavegacion extends JPanel {
         pIzquierdo.add(barra);
         pIzquierdo.add(btnBuscar);
 
-        pDerecho.add(btnColor);
-        pDerecho.add(btnTexto);
-        pDerecho.add(btnAsistIA);
-        pDerecho.add(btnMotorBusqueda);
         pDerecho.add(btnTema);
         pDerecho.add(btnAsistIA);
+        pDerecho.add(btnMotorBusqueda);
         pDerecho.add(btnHistorial);
-
-
 
         this.add(pIzquierdo, BorderLayout.CENTER);
         this.add(pDerecho, BorderLayout.EAST);
         //add(javax.swing.Box.createHorizontalGlue());
     }
 
-    public JButton getBtnTema() { return btnTema; }
+    public JButton getBtnTema() {return btnTema;}
+
     public JButton getBtnHistorial() {
         return btnHistorial;
     }
@@ -211,6 +207,10 @@ public class BarraNavegacion extends JPanel {
 
     public JButton getBtnAsistIA() {
         return btnAsistIA;
+    }
+
+    public JButton getBtnMotorBusqueda() {
+        return btnMotorBusqueda;
     }
 
     public void setRenderizador(Renderizador renderizador) {
@@ -223,4 +223,5 @@ public class BarraNavegacion extends JPanel {
 
     public JButton getBtnAtras() { return btnAtras; }
     public JButton getBtnAdelante() { return btnAdelante; }
+    public JButton getBtnBuscar() { return btnBuscar; }
 }

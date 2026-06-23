@@ -7,7 +7,6 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
 import java.net.*;
-import java.nio.file.Files;
 
 public class Renderizador extends JPanel {
     private final JEditorPane visorHTML;
@@ -16,7 +15,11 @@ public class Renderizador extends JPanel {
     private JTextField buscarIA;
     private boolean IAactiva = false;
     private String UltimaPag = "";
-    //
+    //atributos motor
+    private JPanel panelMotor;
+    private JTextField buscarMotor;
+    private boolean MotorActivo=false;
+    private String ultimaPagMotor="";
     JScrollPane scroll;
     private final ClienteHTTP clienteHTTP;
     private final Pestana pestana;
@@ -24,6 +27,7 @@ public class Renderizador extends JPanel {
     private final BarraNavegacion barraNavegacion;
     private NavegaAvanzada navegaAvanzada;
     private final NavegaOffline navegaOffline = new NavegaOffline();
+    private final JPanel inferiores;
 
     public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
         setLayout(new BorderLayout());
@@ -43,6 +47,12 @@ public class Renderizador extends JPanel {
 
         configurarEventos(estado, barra);
         inicializarPanelIA();
+        inicializarMotor();
+
+        inferiores=new JPanel(new BorderLayout());
+        inferiores.add(panelIA,BorderLayout.SOUTH);
+        inferiores.add(panelMotor,BorderLayout.NORTH);
+        add(inferiores,BorderLayout.SOUTH);
 
         scroll = new JScrollPane(visorHTML);
         scroll.setBorder(null);
@@ -52,6 +62,7 @@ public class Renderizador extends JPanel {
     public void setNavegaAvanzada(NavegaAvanzada navegaAvanzada) {
         this.navegaAvanzada = navegaAvanzada;
     }
+
     public void configurarEventos(JLabel estado, JTextField barra) {
         visorHTML.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -63,22 +74,22 @@ public class Renderizador extends JPanel {
                             urlClickeada = e.getURL().getFile();
                             // Si la ruta es absoluta (trae C:/), extraemos solo el nombre
                             if (urlClickeada.contains("/")) {
-                                urlClickeada = urlClickeada.substring(urlClickeada.lastIndexOf('/') + 1);
+                                urlClickeada = urlClickeada.substring(1).replace("%20"," ").replace("/","\\");
                             }
                         } else {
                             // Si el URL es nulo por el cambio de estilo, extraemos la descripción del link
                             urlClickeada = e.getDescription();
                         }
-                        // Actualizamos la barra de búsqueda visualmente
+
+                        // Solo actualizamos la barra visualmente.
                         barra.setText(urlClickeada.replace("%20", " "));
 
-                        // Llamamos a cargarURL para que ejecute el nuevo código
-                        cargarURL(urlClickeada, estado);
                     }catch(Exception ex) {
                         estado.setText("Error al abrir vínculo: " + ex.getMessage());
+                        return; // Cortamos la ejecución en caso de error
                     }
 
-                }else{
+                } else {
                     URL urlBase = visorHTML.getPage();
                     urlClickeada = (e.getURL() != null) ? e.getURL().toString() : e.getDescription();
                     if (urlClickeada.startsWith("http://")) {
@@ -88,8 +99,9 @@ public class Renderizador extends JPanel {
                     }
                 }
 
-                final String urlFinalAProcesar = urlClickeada;
+                // El hilo universal procesará la carga (Tanto para Online como Offline)
 
+                final String urlFinalAProcesar = urlClickeada;
                 new Thread(() -> {
                     try {
                         cargarURL(urlFinalAProcesar, estado);
@@ -105,39 +117,63 @@ public class Renderizador extends JPanel {
 
     public void cargarURL(String nombreArchivo, JLabel estado, boolean registrarEnHistorial) {
 
-        if(Ventana.Modo()){
-            try {
-                // 1. Obtener la carpeta nativa del proyecto
-                String carpetaNativa = System.getProperty("user.dir");
-                File archivo = new File(carpetaNativa, nombreArchivo);
+        if(Ventana.Modo()) {
+            String rutaLocal = nombreArchivo;
 
-                // Si el usuario puso una ruta completa, File la reconocerá automáticamente
-                if (!archivo.exists()) {
-                    archivo = new File(nombreArchivo);
-                }
-                if (archivo.exists() && archivo.isFile()) {
-                    // 2. Leer el código HTML como texto
-                    String codigo = new String(Files.readAllBytes(archivo.toPath()));
-                    // 3. Configurar el visor para que acepte HTML y links
-                    visorHTML.setContentType("text/html");
+            boolean leido = navegaOffline.leerArchivoLocal(rutaLocal);
 
-                    // 4. ESTABLECER LA BASE (Crucial para que funcionen los links relativos)
-                    visorHTML.setText(codigo); // Primero inyectamos el texto
-                    HTMLDocument doc = (HTMLDocument) visorHTML.getDocument();
-                    doc.setBase(archivo.getParentFile().toURI().toURL()); // Luego fijamos la carpeta
+            // 1. Extraemos el nombre del archivo para usarlo como título
+            File archivo = new File(rutaLocal);
+            String nombrePestana = archivo.getName().isEmpty() ? "Archivo Local" : archivo.getName();
 
-                    estado.setText("\u2713 " + archivo.getName() + " cargado");
-                    estado.setForeground(new Color(0, 102, 0)); // Verde éxito
-                } else {
-                    estado.setText("Error: Archivo no encontrado");
-                    estado.setForeground(Color.RED);
-                }
-            } catch (Exception ex) {
-                estado.setText("Error al procesar el archivo");
-                ex.printStackTrace();
+            // >>> NUEVO: Registrar visita para los botones Atrás y Adelante <<<
+            if (registrarEnHistorial && navegaAvanzada != null) {
+                navegaAvanzada.registrarVisitaNueva(rutaLocal);
             }
 
-        }else {
+            SwingUtilities.invokeLater(() -> {
+                barraNavegacion.getBarra().setText(rutaLocal);
+                estado.setText(navegaOffline.getFirstLine());
+
+                //Guardar en el menú del Historial
+                if (registrarEnHistorial && leido) {
+                    historial.agregarVisita(rutaLocal, nombrePestana);
+                }
+            });
+
+            // Configurar la base del documento para que busque fotos locales en la misma carpeta
+            try {
+                File f = new File(rutaLocal);
+                if (f.exists()) {
+                    visorHTML.getDocument().putProperty(javax.swing.text.Document.StreamDescriptionProperty, f.toURI().toURL());
+                }
+            } catch (Exception l) {
+            }
+
+            String html = navegaOffline.getContenido();
+            if (html != null) {
+                // Quitamos scripts pesados
+                html = html.replaceAll("(?i)<script[\\s\\S]*?></script>", "");
+                html = html.replaceAll("(?i)on\\w+=\"[^\"]*\"", "");
+                visorHTML.setText(html);
+            }
+
+            // Actualizar la pestaña con el nombre del archivo
+            JTabbedPane panel = pestana.getContenedor();
+            int index = panel.getSelectedIndex();
+            if (index != -1) {
+                panel.setTitleAt(index, nombrePestana);
+                Component c = panel.getTabComponentAt(index);
+                if (c instanceof JPanel) {
+                    for (Component child : ((JPanel) c).getComponents()) {
+                        if (child instanceof JLabel) {
+                            ((JLabel) child).setText(nombrePestana);
+                            break;
+                        }
+                    }
+                }
+            }
+        }else{
 
             if (!nombreArchivo.startsWith("http://") && !nombreArchivo.startsWith("https://")) {
                 nombreArchivo = "http://" + nombreArchivo;
@@ -307,40 +343,42 @@ public class Renderizador extends JPanel {
     }
     //metodos IA
     private void inicializarPanelIA() {
+        final boolean[] altbtn = {false};
         //panel de contenido IA
-        panelIA=new JPanel(new BorderLayout(5,5));
-        //label
-        JLabel labelIA = new JLabel("🤖 Hazme una pregunta");
-        labelIA.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        panelIA=new JPanel(new FlowLayout(FlowLayout.LEFT));
         //campo de texto
         buscarIA = new JTextField();
-        buscarIA.setPreferredSize(new Dimension(300, 30));
+        buscarIA.setPreferredSize(new Dimension(600, 28));
         buscarIA.putClientProperty("placeholder", "Escribe tu pregunta...");
-        /*buscarIA.setBorder(BorderFactory.createCompoundBorder(
+        buscarIA.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));*/
+        ));
 
         //boton buscar IA
-        JButton btnBuscarIA = new JButton("⬆️");
-        btnBuscarIA.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-        btnBuscarIA.setPreferredSize(new Dimension(40, 30));
-        btnBuscarIA.setMargin(new Insets(0, 0, 0, 0));
+        JButton btnBuscarIA = new JButton("⬆");
+        btnBuscarIA.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        btnBuscarIA.setMargin(new Insets(7, 0, 0, 0));
+        btnBuscarIA.setPreferredSize(new Dimension(40,40));
         btnBuscarIA.setBorderPainted(false);
         btnBuscarIA.setContentAreaFilled(false);
         btnBuscarIA.setFocusPainted(false);
-        //btnBuscarIA.setToolTipText("Presione para buscar");
+        btnBuscarIA.setToolTipText("Presione para buscar");
 
         buscarIA.addActionListener(e -> {
+            if (btnBuscarIA.isEnabled())
+                btnBuscarIA.doClick();
+        });
+        btnBuscarIA.addActionListener(e -> {
             String pregunta=buscarIA.getText().trim();
             if (pregunta.isEmpty())
                 return;
-
+            buscarIA.setEnabled(false);
             new Thread(() -> {
                 try {
                     String respuesta = AsistenteIA.callGeminiAPI(pregunta);
                     // Convierte saltos de línea a HTML
-                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px'>"
+                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px; background-color: lightblue'>"
                             + "<b>Pregunta:</b> " + pregunta + "<br><br>"
                             + "<b>Respuesta:</b><br><br>"
                             + respuesta.replace("\n", "<br>")
@@ -356,29 +394,131 @@ public class Renderizador extends JPanel {
         });
 
 
-        //panelIA.add(labelIA);
-
         panelIA.add(buscarIA);
-        //panelIA.add(btnBuscarIA);
+        panelIA.add(btnBuscarIA);
         panelIA.setVisible(false);
-        add(panelIA,BorderLayout.NORTH);
 
     }
+
     public void alternarIA() {
         if (!IAactiva) {
-            // Guarda el HTML actual para restaurarlo al salir
             UltimaPag = visorHTML.getText();
+            //verificar si esta activo el panelMotor
+            if (MotorActivo) {
+                panelMotor.setVisible(false);
+                MotorActivo = false;
+            }
             barraNavegacion.getBarra().setEnabled(false);
+            barraNavegacion.getBtnBuscar().setEnabled(false);
+            buscarIA.setEnabled(true);
             panelIA.setVisible(true);
             buscarIA.setText("");
             buscarIA.requestFocus();
-            visorHTML.setText("<html><body style='font-family:Segoe UI; padding:50px; color:gray'>" + "<p>Escribe tu pregunta arriba y presiona Enter.</p></body></html>");
+            visorHTML.setText("<html><body style='font-family:Segoe UI; padding:100px; color:gray; font-size:30px'>"
+                    + "<p>🤖 Hazme una pregunta.</p></body></html>");
         } else {
             panelIA.setVisible(false);
             barraNavegacion.getBarra().setEnabled(true);
-            visorHTML.setText(UltimaPag); // restaura la última página
+            barraNavegacion.getBtnBuscar().setEnabled(true);
+            //si el historial esta vacio va a home, sino a la ultima busqueda
+            if (historial.getRegistros().isEmpty()) {
+                visorHTML.setText("<html><body style='text-align:center; font-family:Arial;'>"
+                        + "<h1>Hola, bienvenidos a nuestro navegador</h1>"
+                        + "</body></html>");
+            } else {
+                visorHTML.setText(UltimaPag);
+            }
         }
         IAactiva = !IAactiva;
+        revalidate();
+        repaint();
+    }
+
+    //motor de busqueda
+    public void inicializarMotor(){
+        panelMotor=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        //campo de texto
+        buscarMotor = new JTextField();
+        buscarMotor.setPreferredSize(new Dimension(600, 28));
+        buscarMotor.putClientProperty("placeholder", "Escribe tu pregunta...");
+        buscarMotor.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
+        //boton buscar motor
+        JButton btnBuscarMotor = new JButton("⬆");
+        btnBuscarMotor.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        btnBuscarMotor.setMargin(new Insets(7, 0, 0, 0));
+        btnBuscarMotor.setPreferredSize(new Dimension(40,40));
+        btnBuscarMotor.setBorderPainted(false);
+        btnBuscarMotor.setContentAreaFilled(false);
+        btnBuscarMotor.setFocusPainted(false);
+        btnBuscarMotor.setToolTipText("Presione para buscar");
+
+        btnBuscarMotor.addActionListener(e -> {
+            String pregunta=buscarMotor.getText().trim();
+            if (pregunta.isEmpty())
+                return;
+            buscarMotor.setEnabled(false);
+            MotorBusqueda motorBusqueda=new MotorBusqueda();
+            new Thread(() -> {
+                try {
+                    String busqueda=buscarMotor.getText();
+
+                    String html = "<html><body style='font-family:Segoe UI; padding:20px; font-size:14px; background-color: lightblue'>"
+                            + "<b>Pregunta:</b> " + busqueda + "<br><br>"
+                            + motorBusqueda.buscarDatos(busqueda).replace("\n", "<br>")
+                            + "</body></html>";
+                    SwingUtilities.invokeLater(() -> visorHTML.setText(html));
+                } catch (Exception ex) {
+                    SwingUtilities.invokeLater(() ->
+                            visorHTML.setText("<html><body style='padding:20px; color:red'>"
+                                    + "Error: " + ex.getMessage() + "</body></html>")
+                    );
+                }
+            }).start();
+        });
+
+        buscarMotor.addActionListener(e ->{
+            if (btnBuscarMotor.isEnabled())
+                btnBuscarMotor.doClick();
+        });
+
+        panelMotor.add(buscarMotor);
+        panelMotor.add(btnBuscarMotor);
+        panelMotor.setVisible(false);
+    }
+
+    public void alternarMotor(){
+        if (!MotorActivo) {
+            ultimaPagMotor = visorHTML.getText();
+            if (IAactiva){
+                panelIA.setVisible(false);
+                IAactiva=false;
+            }
+            barraNavegacion.getBarra().setEnabled(false);
+            barraNavegacion.getBtnBuscar().setEnabled(false);
+            buscarMotor.setEnabled(true);
+            panelMotor.setVisible(true);
+            buscarMotor.setText("");
+            buscarMotor.requestFocus();
+            visorHTML.setText("<html><body style='font-family:Segoe UI; padding:100px; color:gray; font-size:30px'>"
+                    + "<p><img src='brave.png' width='100' height='100'>BRAVE 2</p></body></html>");
+        } else {
+            panelMotor.setVisible(false);
+            barraNavegacion.getBarra().setEnabled(true);
+            barraNavegacion.getBtnBuscar().setEnabled(true);
+            // Si historial vacío → home, sino → última página
+            if (historial.getRegistros().isEmpty()) {
+                visorHTML.setText("<html><body style='text-align:center; font-family:Arial;'>"
+                        + "<h1>Hola, bienvenidos a nuestro navegador</h1>"
+                        + "</body></html>");
+            } else {
+                visorHTML.setText(ultimaPagMotor);
+            }
+        }
+        MotorActivo = !MotorActivo;
         revalidate();
         repaint();
     }
