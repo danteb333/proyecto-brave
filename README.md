@@ -1,9 +1,16 @@
-Bienvenidos a nuestro proyecto de programación, les presentamos el nuevo navegador Brave 2 "Ahora es personal", este fue diseñado en java swing, asi que comprendan
-nuestras limitantes.
+Bienvenidos a nuestro proyecto de programación, les presentamos el nuevo navegador Coward.
 
-Para ejecutarlo, necesitan tener java instalado, descarguen todos los archivos y metalos a una carpeta. Desde una IDE de su preferencia e ingrese a la carpeta donde
-guardo sus archivos y abralos en su IDE, ejecute el archivo main, asi podra disfrutar de los beneficios de este navegador.
+# 🛡️ Coward Browser
 
-Muchas gracias por su preferencia.
+Proyecto de navegador web desarrollado 100% en Vanilla Java (Java SE) utilizando `javax.swing` y conectividad nativa a través de Sockets HTTP. 
 
-atte. Equipo alfa buena maravilla onda dinamita escuadrón lobo
+## Características Principales
+* Motor de Búsqueda Interno: Protocolo personalizado (`coward://search/`) con inyección de HTML.
+* Integración con IA: Conexión directa a la API de Gemini (Google) mediante HTTP requests nativos.
+* Navegación Avanzada: Soporte para Historial, marcadores (favoritos) y pilas LIFO (Adelante/Atrás) completamente funcionales tanto Online como Offline.
+* Cero Dependencias: Construido sin frameworks ni librerías externas para máxima portabilidad.
+
+## Cómo ejecutar
+1. Abrir la carpeta raíz en Visual Studio Code (Requiere *Extension Pack for Java*).
+2. Asegurar tener instalado JDK 14 o superior.
+3. Ejecutar el archivo `src/Main.java`.
