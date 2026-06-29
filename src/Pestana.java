@@ -6,8 +6,9 @@ import java.util.LinkedList;
 public class Pestana extends JPanel {
     private final String titulo;
     private final JTabbedPane contenedor;
-    private final JLabel lblEstado=new JLabel("");
+    private final JLabel lblEstado = new JLabel("");
     private boolean esModoOscuro = false;
+    private RenderAvanzado renderizador;
 
     // El constructor configura el contenido visual de la pestaña
     public Pestana(String titulo, JTabbedPane contenedor) {
@@ -21,18 +22,18 @@ public class Pestana extends JPanel {
 
         Historial historial=new Historial();
         BarraNavegacion barraNavegacion = new BarraNavegacion(lblEstado, contenedor);
-        Renderizador renderizador = new Renderizador(lblEstado, barraFalsa, this, historial, barraNavegacion);
+        this.renderizador = new RenderAvanzado(lblEstado, barraFalsa, this, historial, barraNavegacion);
         barraNavegacion.setRenderizador(renderizador);
         NavegaAvanzada navegaAvanzada = new NavegaAvanzada(barraNavegacion.getBtnAtras(), barraNavegacion.getBtnAdelante());
         renderizador.setNavegaAvanzada(navegaAvanzada);
 
-        // Configurar la lógica de los botones de la barra de navegación
+        // 2. Configurar la lógica de los botones de la barra de navegación
         configurarBotonTema(barraNavegacion.getBtnTema(), renderizador);
-
         configurarMenuHistorial(barraNavegacion.getBtnHistorial(),renderizador,historial,barraNavegacion);
 
         //accion boton IA
         barraNavegacion.getBtnAsistIA().addActionListener(e -> renderizador.alternarIA());
+        barraNavegacion.getBtnMotorBusqueda().addActionListener(e -> renderizador.alternarMotor());
 
         //accion de boton atrás
         barraNavegacion.getBtnAtras().addActionListener(e -> {
@@ -62,7 +63,7 @@ public class Pestana extends JPanel {
         this.add(pie, BorderLayout.SOUTH);
     }
 
-    public static void agregarNueva(JTabbedPane panel) {
+    public static Pestana agregarNueva(JTabbedPane panel) {
         int index = panel.getTabCount() - 1; // Posición antes del botón "+"
         String nombrePestana = "Nueva Pestaña";
 
@@ -77,6 +78,8 @@ public class Pestana extends JPanel {
 
         // La seleccionamos automáticamente
         panel.setSelectedIndex(index);
+
+        return contenido;
     }
 
     /**
@@ -119,9 +122,9 @@ public class Pestana extends JPanel {
         return pnlHeader;
     }
 
-    // Metodos de configuracion de menus
+    // --- MÉTODOS DE CONFIGURACIÓN DE MENÚS
 
-    private void configurarBotonTema(JButton btnTema, Renderizador renderizador) {
+    private void configurarBotonTema(JButton btnTema, RenderAvanzado renderizador) {
         btnTema.addActionListener(e -> {
             esModoOscuro = !esModoOscuro;
             if (esModoOscuro) {
@@ -136,7 +139,10 @@ public class Pestana extends JPanel {
         });
     }
 
-    public void configurarMenuHistorial(JButton btnHistorial,Renderizador renderizador,Historial historial,BarraNavegacion barraNavegacion){
+
+
+
+    public void configurarMenuHistorial(JButton btnHistorial,RenderAvanzado renderizador,Historial historial,BarraNavegacion barraNavegacion){
         JPopupMenu menu = new JPopupMenu();
         btnHistorial.addActionListener(e -> {
             menu.removeAll();
@@ -172,7 +178,7 @@ public class Pestana extends JPanel {
         });
     }
 
-    public JTabbedPane getContenedor() {
-        return contenedor;
-    }
+    public JTabbedPane getContenedor() {return contenedor;}
+    public RenderAvanzado getRenderizador() { return renderizador; }
+    public JLabel getLblEstado() { return lblEstado; }
 }

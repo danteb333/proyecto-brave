@@ -7,7 +7,7 @@ public class Ventana extends JFrame {
     private static boolean modoOffline = false;
 
     public Ventana() {
-        setTitle("Navegador Local");
+        setTitle("Coward Browser");
         setUndecorated(true); // Quita los bordes de Windows/macOS
         setMinimumSize(new Dimension(400, 300));
 
@@ -28,10 +28,10 @@ public class Ventana extends JFrame {
         JPanel top = new JPanel(new BorderLayout());
 
         // Título e Icono (Propio de la ventana)
-        ImageIcon icono = new ImageIcon("icono.jpg");
+        ImageIcon icono = new ImageIcon("icono.png");
         Image imagenRedimensionada = icono.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon iconoFinal = new ImageIcon(imagenRedimensionada);
-        JLabel titulo = new JLabel("Brave 2", iconoFinal, JLabel.LEFT);
+        JLabel titulo = new JLabel("COWARD", iconoFinal, JLabel.LEFT);
         titulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 
         // PANEL DE BOTONES DE CONTROL (Min, Max, Salir)
@@ -42,7 +42,7 @@ public class Ventana extends JFrame {
         JButton btnMax = crearBoton("❒", new Color(128, 128, 128));
         JButton btnSalir = crearBoton("X", new Color(232, 17, 35));
         //Boton Online/Offline
-        JButton btnRed = crearBoton("⚫", new Color(255, 255, 255));
+        JButton btnRed = crearBoton("⚫Online", new Color(255, 255, 255));
         btnRed.setForeground(new Color(0,255,0));
         btnRed.setToolTipText("Modo Actual: Online");
         btnRed.setBorderPainted(false);
@@ -50,11 +50,11 @@ public class Ventana extends JFrame {
         btnRed.addActionListener(e->{
             modoOffline = !modoOffline;
             if(modoOffline){
-                btnRed.setText("⚫");
+                btnRed.setText("⚫Offline");
                 btnRed.setForeground(new Color(255,0,0));
                 btnRed.setToolTipText("Modo Actual: Offline");
             }else{
-                btnRed.setText("⚫");
+                btnRed.setText("⚫Online");
                 btnRed.setForeground(new Color(0,255,0));
                 btnRed.setToolTipText("Modo Actual: Online");
             }

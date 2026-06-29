@@ -13,7 +13,7 @@ public class BarraNavegacion extends JPanel {
     private final JButton btnMotorBusqueda;
     private final JButton btnTema;
     private final JButton btnHistorial;
-    private Renderizador renderizador;
+    private RenderAvanzado renderizador;
 
     public BarraNavegacion(JLabel estado, JTabbedPane panelPestanas) {
         this.setLayout(new BorderLayout(5, 0));
@@ -213,7 +213,7 @@ public class BarraNavegacion extends JPanel {
         return btnMotorBusqueda;
     }
 
-    public void setRenderizador(Renderizador renderizador) {
+    public void setRenderizador(RenderAvanzado renderizador) {
         this.renderizador = renderizador;
     }
 
