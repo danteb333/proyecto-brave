@@ -1,6 +1,6 @@
 Bienvenidos a nuestro proyecto de programación, les presentamos el nuevo navegador Coward.
 
-# 🛡️ Coward Browser
+# Coward Browser
 
 Proyecto de navegador web desarrollado 100% en Vanilla Java (Java SE) utilizando `javax.swing` y conectividad nativa a través de Sockets HTTP. 
 
