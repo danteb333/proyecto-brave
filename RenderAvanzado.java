@@ -8,7 +8,7 @@ import java.awt.*;
 import java.io.File;
 import java.net.*;
 
-public class Renderizador extends JPanel {
+public class RenderAvanzado extends JPanel {
     private final JEditorPane visorHTML;
     //atributos IA
     private JPanel panelIA;
@@ -29,7 +29,7 @@ public class Renderizador extends JPanel {
     private final NavegaOffline navegaOffline = new NavegaOffline();
     private final JPanel inferiores;
 
-    public Renderizador(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
+    public RenderAvanzado(JLabel estado, JTextField barra,Pestana pestana, Historial historial,BarraNavegacion barraNavegacion) {
         setLayout(new BorderLayout());
         visorHTML = new JEditorPane();
         visorHTML.setEditable(false);
@@ -176,9 +176,9 @@ public class Renderizador extends JPanel {
         } else {
 
             // MOTOR DE BUSQUEDA INTERNO
-            if (nombreArchivo.startsWith("brave://search/")) {
+            if (nombreArchivo.startsWith("coward://search/")) {
                 // Limpiamos la URL para recuperar la palabra original
-                String busqueda = nombreArchivo.replace("brave://search/", "").replace("+", " ");
+                String busqueda = nombreArchivo.replace("coward://search/", "").replace("+", " ");
 
                 // 1. Lo registramos en las pilas de Adelante/Atras
                 if (registrarEnHistorial && navegaAvanzada != null) {
@@ -517,7 +517,7 @@ public class Renderizador extends JPanel {
 
             // 2. Disparamos la búsqueda hacia esa nueva pestaña en un hilo
             new Thread(() -> {
-                String urlFalsa = "brave://search/" + busqueda.replace(" ", "+");
+                String urlFalsa = "coward://search/" + busqueda.replace(" ", "+");
                 nuevaPestana.getRenderizador().cargarURL(urlFalsa, nuevaPestana.getLblEstado());
             }).start();
 
